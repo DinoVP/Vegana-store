@@ -23,9 +23,22 @@ pipeline {
         stage('Start App') {
             steps {
                 bat '''
-                echo Starting Spring Boot...
-                start "" /B mvn spring-boot:run > app.log 2>&1
-                ping -n 10 127.0.0.1 >nul
+                    echo Starting Spring Boot...
+                    start "" /B mvn spring-boot:run > app.log 2>&1
+
+                    echo Waiting for Spring Boot to be ready...
+
+                    REM === Loop 40 lần để check http://localhost:8080 ===
+                    for /l %%x in (1,1,40) do (
+                        curl -s http://localhost:8080 >nul
+                        if %errorlevel%==0 (
+                            echo Spring Boot is UP!
+                            goto :done
+                        )
+                        echo Waiting for app (%%x/40)...
+                        ping -n 2 127.0.0.1 >nul
+                    )
+                    :done
                 '''
             }
         }
@@ -40,8 +53,18 @@ pipeline {
             steps {
                 archiveArtifacts artifacts: 'test-output/**/*', allowEmptyArchive: true
                 archiveArtifacts artifacts: 'target/surefire-reports/**/*', allowEmptyArchive: true
-                archiveArtifacts artifact
+                archiveArtifacts artifacts: 'app.log', allowEmptyArchive: true
             }
+        }
+    }
+
+    post {
+        always {
+            bat '''
+                echo Stopping Spring Boot if running...
+                taskkill /F /IM java.exe >nul 2>&1
+                echo Done.
+            '''
         }
     }
 }
