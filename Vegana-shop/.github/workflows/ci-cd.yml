@@ -1,0 +1,135 @@
+name: CI/CD Pipeline - Vegana Shop Automation Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Cho phép chạy thủ công
+
+jobs:
+  # Job 1: Build và Test
+  test:
+    name: Run Automation Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [17]
+        browser: [chrome] # Có thể thêm firefox, edge
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          google-chrome --version
+      
+      - name: Start Spring Boot Application
+        run: |
+          mvn spring-boot:run &
+          sleep 30 # Đợi app khởi động
+          curl -f http://localhost:8080 || exit 1
+        continue-on-error: false
+      
+      - name: Run Tests
+        run: |
+          mvn clean test -DsuiteXmlFile=src/test/resources/testng.xml
+        env:
+          BROWSER: ${{ matrix.browser }}
+      
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: |
+            test-output/reports/
+            test-output/screenshots/
+            test-output/logs/
+          retention-days: 30
+      
+      - name: Upload Extent Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: extent-reports-${{ matrix.browser }}
+          path: test-output/reports/*.html
+          retention-days: 30
+      
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: '**/testng-results.xml'
+          check_name: 'Test Results (${{ matrix.browser }})'
+          comment_mode: 'create new'
+          report_individual_runs: true
+
+  # Job 2: Generate và Publish Reports
+  reports:
+    name: Generate Test Reports
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: List test results
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Extent Reports" >> $GITHUB_STEP_SUMMARY
+          find . -name "*.html" -type f | head -5 >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Screenshots" >> $GITHUB_STEP_SUMMARY
+          find . -name "*.png" -type f | wc -l >> $GITHUB_STEP_SUMMARY
+      
+      - name: Archive Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-test-reports
+          path: |
+            test-results-*/
+            extent-reports-*/
+          retention-days: 90
+
+  # Job 3: Notification (Optional)
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [test, reports]
+    if: always()
+    
+    steps:
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "✅ All tests passed successfully!"
+      
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Tests failed. Please check the reports."
+

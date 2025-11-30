@@ -1,0 +1,48 @@
+name: Simple CI - Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Chạy tests tự động mỗi ngày lúc 2h sáng (UTC)
+    - cron: '0 2 * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+      
+      - name: Start Application
+        run: |
+          mvn spring-boot:run &
+          sleep 30
+          curl -f http://localhost:8080 || exit 1
+      
+      - name: Run Tests
+        run: mvn clean test
+      
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: test-output/
+          retention-days: 7
+
