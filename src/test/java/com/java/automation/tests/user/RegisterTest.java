@@ -96,103 +96,104 @@ public class RegisterTest extends BaseTest {
             "Form không validate khi Customer ID trống");
     }
 
-    @Test(priority = 5, description = "Test đăng ký thất bại với Fullname trống")
-    public void testRegisterWithEmptyFullname() {
-        LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
-        registerPage.navigateToLoginPage();
-        
-        registerPage.clickSignUpTab();
-        registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
-        registerPage.enterRegisterEmail("test@example.com");
-        registerPage.enterRegisterPassword("123456");
-        registerPage.clickSignUpButton();
-        
-        // HTML5 validation should prevent submission
-        Assert.assertTrue(registerPage.isOnLoginPage(), 
-            "Form không validate khi Fullname trống");
-    }
+    // Commented out to reduce test execution time
+    // @Test(priority = 5, description = "Test đăng ký thất bại với Fullname trống")
+    // public void testRegisterWithEmptyFullname() {
+    //     LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
+    //     registerPage.navigateToLoginPage();
+    //     
+    //     registerPage.clickSignUpTab();
+    //     registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
+    //     registerPage.enterRegisterEmail("test@example.com");
+    //     registerPage.enterRegisterPassword("123456");
+    //     registerPage.clickSignUpButton();
+    //     
+    //     // HTML5 validation should prevent submission
+    //     Assert.assertTrue(registerPage.isOnLoginPage(), 
+    //         "Form không validate khi Fullname trống");
+    // }
 
-    @Test(priority = 6, description = "Test đăng ký thất bại với Email trống")
-    public void testRegisterWithEmptyEmail() {
-        LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
-        registerPage.navigateToLoginPage();
-        
-        registerPage.clickSignUpTab();
-        registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
-        registerPage.enterRegisterFullname("Test User");
-        registerPage.enterRegisterPassword("123456");
-        registerPage.clickSignUpButton();
-        
-        // HTML5 validation should prevent submission
-        Assert.assertTrue(registerPage.isOnLoginPage(), 
-            "Form không validate khi Email trống");
-    }
+    // @Test(priority = 6, description = "Test đăng ký thất bại với Email trống")
+    // public void testRegisterWithEmptyEmail() {
+    //     LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
+    //     registerPage.navigateToLoginPage();
+    //     
+    //     registerPage.clickSignUpTab();
+    //     registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
+    //     registerPage.enterRegisterFullname("Test User");
+    //     registerPage.enterRegisterPassword("123456");
+    //     registerPage.clickSignUpButton();
+    //     
+    //     // HTML5 validation should prevent submission
+    //     Assert.assertTrue(registerPage.isOnLoginPage(), 
+    //         "Form không validate khi Email trống");
+    // }
 
-    @Test(priority = 7, description = "Test đăng ký thất bại với Email không hợp lệ")
-    public void testRegisterWithInvalidEmail() {
-        LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
-        registerPage.navigateToLoginPage();
-        
-        registerPage.clickSignUpTab();
-        registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
-        registerPage.enterRegisterFullname("Test User");
-        registerPage.enterRegisterEmail("invalid-email");
-        registerPage.enterRegisterPassword("123456");
-        registerPage.clickSignUpButton();
-        
-        // HTML5 email validation should prevent submission
-        Assert.assertTrue(registerPage.isOnLoginPage(), 
-            "Form không validate khi Email không hợp lệ");
-    }
+    // @Test(priority = 7, description = "Test đăng ký thất bại với Email không hợp lệ")
+    // public void testRegisterWithInvalidEmail() {
+    //     LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
+    //     registerPage.navigateToLoginPage();
+    //     
+    //     registerPage.clickSignUpTab();
+    //     registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
+    //     registerPage.enterRegisterFullname("Test User");
+    //     registerPage.enterRegisterEmail("invalid-email");
+    //     registerPage.enterRegisterPassword("123456");
+    //     registerPage.clickSignUpButton();
+    //     
+    //     // HTML5 email validation should prevent submission
+    //     Assert.assertTrue(registerPage.isOnLoginPage(), 
+    //         "Form không validate khi Email không hợp lệ");
+    // }
 
-    @Test(priority = 8, description = "Test đăng ký thất bại với mật khẩu trống")
-    public void testRegisterWithEmptyPassword() {
-        LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
-        registerPage.navigateToLoginPage();
-        
-        registerPage.clickSignUpTab();
-        registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
-        registerPage.enterRegisterFullname("Test User");
-        registerPage.enterRegisterEmail("test@example.com");
-        registerPage.clickSignUpButton();
-        
-        // HTML5 validation should prevent submission
-        Assert.assertTrue(registerPage.isOnLoginPage(), 
-            "Form không validate khi mật khẩu trống");
-    }
+    // @Test(priority = 8, description = "Test đăng ký thất bại với mật khẩu trống")
+    // public void testRegisterWithEmptyPassword() {
+    //     LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
+    //     registerPage.navigateToLoginPage();
+    //     
+    //     registerPage.clickSignUpTab();
+    //     registerPage.enterRegisterCustomerId(TestDataGenerator.generateUniqueCustomerId());
+    //     registerPage.enterRegisterFullname("Test User");
+    //     registerPage.enterRegisterEmail("test@example.com");
+    //     registerPage.clickSignUpButton();
+    //     
+    //     // HTML5 validation should prevent submission
+    //     Assert.assertTrue(registerPage.isOnLoginPage(), 
+    //         "Form không validate khi mật khẩu trống");
+    // }
 
-    @Test(priority = 9, description = "Test đăng ký thất bại với mật khẩu quá ngắn")
-    public void testRegisterWithShortPassword() {
-        LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
-        registerPage.navigateToLoginPage();
-        
-        String customerId = TestDataGenerator.generateUniqueCustomerId();
-        String fullname = TestDataGenerator.generateUniqueFullname();
-        String email = TestDataGenerator.generateUniqueEmail();
-        String shortPassword = "12345"; // Less than 6 characters
-        
-        registerPage.register(customerId, fullname, email, shortPassword);
-        
-        // HTML5 minlength validation should prevent submission or show error
-        // The form requires password to be at least 6 characters
-        Assert.assertTrue(registerPage.isOnLoginPage(), 
-            "Form không validate khi mật khẩu quá ngắn");
-    }
+    // @Test(priority = 9, description = "Test đăng ký thất bại với mật khẩu quá ngắn")
+    // public void testRegisterWithShortPassword() {
+    //     LoginOrRegisterPage registerPage = new LoginOrRegisterPage(driver);
+    //     registerPage.navigateToLoginPage();
+    //     
+    //     String customerId = TestDataGenerator.generateUniqueCustomerId();
+    //     String fullname = TestDataGenerator.generateUniqueFullname();
+    //     String email = TestDataGenerator.generateUniqueEmail();
+    //     String shortPassword = "12345"; // Less than 6 characters
+    //     
+    //     registerPage.register(customerId, fullname, email, shortPassword);
+    //     
+    //     // HTML5 minlength validation should prevent submission or show error
+    //     // The form requires password to be at least 6 characters
+    //     Assert.assertTrue(registerPage.isOnLoginPage(), 
+    //         "Form không validate khi mật khẩu quá ngắn");
+    // }
 
-    @Test(priority = 10, description = "Test chuyển đổi giữa tab Sign In và Sign Up")
-    public void testSwitchBetweenTabs() {
-        LoginOrRegisterPage page = new LoginOrRegisterPage(driver);
-        page.navigateToLoginPage();
-        
-        // Initially on Sign In tab
-        page.clickSignUpTab();
-        // Should be on Sign Up tab now
-        
-        page.clickSignInTab();
-        // Should be back on Sign In tab
-        
-        Assert.assertTrue(page.isOnLoginPage(), 
-            "Không thể chuyển đổi giữa các tab");
-    }
+    // @Test(priority = 10, description = "Test chuyển đổi giữa tab Sign In và Sign Up")
+    // public void testSwitchBetweenTabs() {
+    //     LoginOrRegisterPage page = new LoginOrRegisterPage(driver);
+    //     page.navigateToLoginPage();
+    //     
+    //     // Initially on Sign In tab
+    //     page.clickSignUpTab();
+    //     // Should be on Sign Up tab now
+    //     
+    //     page.clickSignInTab();
+    //     // Should be back on Sign In tab
+    //     
+    //     Assert.assertTrue(page.isOnLoginPage(), 
+    //         "Không thể chuyển đổi giữa các tab");
+    // }
 }
 

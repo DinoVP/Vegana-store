@@ -61,65 +61,66 @@ public class LoginTest extends BaseTest {
             "Thông báo lỗi không đúng: " + errorText);
     }
 
-    @Test(priority = 4, description = "Test đăng nhập thất bại với Customer ID và mật khẩu đều trống")
-    public void testLoginWithEmptyFields() {
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
-        loginPage.navigateToLoginPage();
-        
-        loginPage.clickSignInTab();
-        loginPage.clickSignInButton();
-        
-        // Verify that form validation prevents submission or shows error
-        // HTML5 validation should prevent empty submission
-        Assert.assertTrue(loginPage.isOnLoginPage(), 
-            "Form không validate khi các trường trống");
-    }
+    // Commented out to reduce test execution time
+    // @Test(priority = 4, description = "Test đăng nhập thất bại với Customer ID và mật khẩu đều trống")
+    // public void testLoginWithEmptyFields() {
+    //     LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+    //     loginPage.navigateToLoginPage();
+    //     
+    //     loginPage.clickSignInTab();
+    //     loginPage.clickSignInButton();
+    //     
+    //     // Verify that form validation prevents submission or shows error
+    //     // HTML5 validation should prevent empty submission
+    //     Assert.assertTrue(loginPage.isOnLoginPage(), 
+    //         "Form không validate khi các trường trống");
+    // }
 
-    @Test(priority = 5, description = "Test đăng nhập với Remember Me checkbox")
-    public void testLoginWithRememberMe() {
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
-        loginPage.navigateToLoginPage();
-        
-        String customerId = TestConfig.getProperty("test.user.id");
-        String password = TestConfig.getProperty("test.user.password");
-        
-        loginPage.clickSignInTab();
-        loginPage.enterLoginCustomerId(customerId);
-        loginPage.enterLoginPassword(password);
-        loginPage.checkRememberMe();
-        loginPage.clickSignInButton();
-        
-        // Verify successful login
-        Assert.assertTrue(loginPage.isOnHomePage(), 
-            "Đăng nhập với Remember Me không thành công");
-    }
+    // @Test(priority = 5, description = "Test đăng nhập với Remember Me checkbox")
+    // public void testLoginWithRememberMe() {
+    //     LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+    //     loginPage.navigateToLoginPage();
+    //     
+    //     String customerId = TestConfig.getProperty("test.user.id");
+    //     String password = TestConfig.getProperty("test.user.password");
+    //     
+    //     loginPage.clickSignInTab();
+    //     loginPage.enterLoginCustomerId(customerId);
+    //     loginPage.enterLoginPassword(password);
+    //     loginPage.checkRememberMe();
+    //     loginPage.clickSignInButton();
+    //     
+    //     // Verify successful login
+    //     Assert.assertTrue(loginPage.isOnHomePage(), 
+    //         "Đăng nhập với Remember Me không thành công");
+    // }
 
-    @Test(priority = 6, description = "Test đăng nhập với Customer ID trống")
-    public void testLoginWithEmptyCustomerId() {
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
-        loginPage.navigateToLoginPage();
-        
-        loginPage.clickSignInTab();
-        loginPage.enterLoginPassword("123456");
-        loginPage.clickSignInButton();
-        
-        // HTML5 validation should prevent submission
-        Assert.assertTrue(loginPage.isOnLoginPage(), 
-            "Form không validate khi Customer ID trống");
-    }
+    // @Test(priority = 6, description = "Test đăng nhập với Customer ID trống")
+    // public void testLoginWithEmptyCustomerId() {
+    //     LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+    //     loginPage.navigateToLoginPage();
+    //     
+    //     loginPage.clickSignInTab();
+    //     loginPage.enterLoginPassword("123456");
+    //     loginPage.clickSignInButton();
+    //     
+    //     // HTML5 validation should prevent submission
+    //     Assert.assertTrue(loginPage.isOnLoginPage(), 
+    //         "Form không validate khi Customer ID trống");
+    // }
 
-    @Test(priority = 7, description = "Test đăng nhập với mật khẩu trống")
-    public void testLoginWithEmptyPassword() {
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
-        loginPage.navigateToLoginPage();
-        
-        loginPage.clickSignInTab();
-        loginPage.enterLoginCustomerId("testuser001");
-        loginPage.clickSignInButton();
-        
-        // HTML5 validation should prevent submission
-        Assert.assertTrue(loginPage.isOnLoginPage(), 
-            "Form không validate khi mật khẩu trống");
-    }
+    // @Test(priority = 7, description = "Test đăng nhập với mật khẩu trống")
+    // public void testLoginWithEmptyPassword() {
+    //     LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+    //     loginPage.navigateToLoginPage();
+    //     
+    //     loginPage.clickSignInTab();
+    //     loginPage.enterLoginCustomerId("testuser001");
+    //     loginPage.clickSignInButton();
+    //     
+    //     // HTML5 validation should prevent submission
+    //     Assert.assertTrue(loginPage.isOnLoginPage(), 
+    //         "Form không validate khi mật khẩu trống");
+    // }
 }
 

@@ -84,47 +84,6 @@ Download `app-logs` artifact để xem Spring Boot application logs.
 3. Click **Run workflow**
 4. Chọn branch và click **Run workflow**
 
----
-
-## 🔍 Troubleshooting
-
-### Workflow không chạy
-
-**Kiểm tra:**
-- File workflow có trong `.github/workflows/github-actions-ci-cd-demo.yml`?
-- Syntax YAML đúng chưa?
-- Branch trigger đúng chưa?
-
-### MySQL connection failed
-
-**Giải pháp:**
-- Workflow tự động setup MySQL service
-- Kiểm tra credentials trong workflow
-- Xem logs trong Actions tab
-
-### Application không start
-
-**Kiểm tra:**
-- MySQL đã sẵn sàng chưa (wait step)
-- Port 8080 có conflict không
-- Xem app-logs artifact
-
-### Tests fail
-
-**Kiểm tra:**
-- Download test-reports artifact
-- Xem Extent Reports HTML
-- Kiểm tra screenshots
-- Xem test logs
-
-### No files found in test-output
-
-**Giải pháp:**
-- Tests có thể fail trước khi tạo reports
-- Kiểm tra Maven surefire reports trong logs
-- Xem application logs để debug
-
----
 
 ## ✅ Checklist
 
