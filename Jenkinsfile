@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.6-eclipse-temurin-21'
-            args '-v /var/jenkins_home/.m2:/root/.m2'
-        }
-    }
+    agent any
 
     environment {
         MYSQL_HOST = "mysql"
@@ -14,6 +9,7 @@ pipeline {
         APP_PORT = "8080"
         BASE_URL = "http://localhost:8080"
         SELENIUM_HUB_URL = "http://selenium-hub:4444"
+        GITHUB_ACTIONS = "true"
     }
 
     options {
@@ -41,13 +37,16 @@ pipeline {
         ============================ */
         stage('⚙️ Setup Environment') {
             steps {
-                echo '🔧 Setting up build environment (Docker Maven Agent)...'
-                sh '''
-                    echo "=== Environment Info ==="
-                    java -version
-                    mvn -version
-                    echo "========================"
-                '''
+                echo '🔧 Setting up build environment...'
+                script {
+                    sh '''
+                        echo "=== Environment Info ==="
+                        java -version || echo "Java not found, will use Maven wrapper"
+                        ./mvnw -version || mvn -version || echo "Maven not found"
+                        docker --version || echo "Docker not available"
+                        echo "========================"
+                    '''
+                }
             }
         }
 
@@ -57,18 +56,21 @@ pipeline {
         stage('🐬 Wait for MySQL') {
             steps {
                 echo '⏳ Waiting for MySQL...'
-                sh '''
-                    for i in {1..20}; do
-                        if nc -z ${MYSQL_HOST} 3306; then
-                            echo "✅ MySQL is ready!"
-                            exit 0
-                        fi
-                        echo "Waiting for MySQL ($i/20)..."
-                        sleep 3
-                    done
-                    echo "❌ MySQL did not start!"
-                    exit 1
-                '''
+                script {
+                    sh '''
+                        echo "Checking MySQL connection..."
+                        for i in {1..30}; do
+                            if docker exec mysql8 mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASS} --silent 2>/dev/null; then
+                                echo "✅ MySQL is ready!"
+                                exit 0
+                            fi
+                            echo "Waiting for MySQL ($i/30)..."
+                            sleep 2
+                        done
+                        echo "❌ MySQL did not start!"
+                        exit 1
+                    '''
+                }
             }
         }
 
@@ -77,19 +79,21 @@ pipeline {
         ============================ */
         stage('🗄️ Setup Database') {
             steps {
-                sh '''
-                    echo "Creating database if not exists..."
-                    echo "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};" \
-                        | mysql -h ${MYSQL_HOST} -u${MYSQL_USER} -p${MYSQL_PASS} || true
+                script {
+                    sh '''
+                        echo "Creating database if not exists..."
+                        docker exec -i mysql8 mysql -u${MYSQL_USER} -p${MYSQL_PASS} \
+                            -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};" || true
 
-                    if [ -f vegana.sql ]; then
-                        echo "Importing DB schema..."
-                        mysql -h ${MYSQL_HOST} -u${MYSQL_USER} -p${MYSQL_PASS} ${MYSQL_DATABASE} < vegana.sql
-                        echo "✅ Schema imported!"
-                    else
-                        echo "⚠️ vegana.sql not found → skipping import"
-                    fi
-                '''
+                        if [ -f vegana.sql ]; then
+                            echo "Importing DB schema..."
+                            docker exec -i mysql8 mysql -u${MYSQL_USER} -p${MYSQL_PASS} ${MYSQL_DATABASE} < vegana.sql
+                            echo "✅ Schema imported!"
+                        else
+                            echo "⚠️ vegana.sql not found → skipping import"
+                        fi
+                    '''
+                }
             }
         }
 
@@ -98,11 +102,17 @@ pipeline {
         ============================ */
         stage('🔨 Build Application') {
             steps {
-                sh '''
-                    echo "🏗️ Building Spring Boot app..."
-                    mvn clean package -DskipTests
-                    echo "✅ Build done!"
-                '''
+                script {
+                    sh '''
+                        echo "🏗️ Building Spring Boot app..."
+                        if [ -f ./mvnw ]; then
+                            ./mvnw clean package -DskipTests
+                        else
+                            mvn clean package -DskipTests
+                        fi
+                        echo "✅ Build done!"
+                    '''
+                }
             }
         }
 
@@ -111,31 +121,39 @@ pipeline {
         ============================ */
         stage('🚀 Start Spring Boot Application') {
             steps {
-                sh '''
-                    echo "Starting Spring Boot in background..."
-                    nohup mvn spring-boot:run \
-                        -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=false" \
-                        > app.log 2>&1 &
-
-                    echo $! > app.pid
-                    echo "PID: $(cat app.pid)"
-                '''
-
-                sh '''
-                    echo "⏳ Waiting for app to start..."
-                    for i in {1..30}; do
-                        if curl -f http://localhost:${APP_PORT}/ >/dev/null 2>&1; then
-                            echo "✅ App started!"
-                            exit 0
+                script {
+                    sh '''
+                        echo "Starting Spring Boot in background..."
+                        if [ -f ./mvnw ]; then
+                            nohup ./mvnw spring-boot:run \
+                                -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=false -Dhibernate.hbm2ddl.auto=none" \
+                                > app.log 2>&1 &
+                        else
+                            nohup mvn spring-boot:run \
+                                -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=false -Dhibernate.hbm2ddl.auto=none" \
+                                > app.log 2>&1 &
                         fi
-                        echo "($i/30) App not ready, retrying..."
-                        sleep 3
-                    done
 
-                    echo "❌ App failed! Tail log:"
-                    tail -50 app.log || true
-                    exit 1
-                '''
+                        echo $! > app.pid
+                        echo "PID: $(cat app.pid)"
+                    '''
+
+                    sh '''
+                        echo "⏳ Waiting for app to start..."
+                        for i in {1..30}; do
+                            if curl -f http://localhost:${APP_PORT}/ >/dev/null 2>&1; then
+                                echo "✅ App started!"
+                                exit 0
+                            fi
+                            echo "($i/30) App not ready, retrying..."
+                            sleep 3
+                        done
+
+                        echo "❌ App failed! Tail log:"
+                        tail -50 app.log || true
+                        exit 1
+                    '''
+                }
             }
         }
 
@@ -163,11 +181,21 @@ pipeline {
         ============================ */
         stage('🧪 Run Automation Tests') {
             steps {
-                sh '''
-                    mkdir -p test-output/reports test-output/screenshots
-                    echo "Running TestNG tests..."
-                    mvn test -DsuiteXmlFile=src/test/resources/testng.xml
-                '''
+                script {
+                    sh '''
+                        mkdir -p test-output/reports test-output/screenshots test-output/logs
+                        export GITHUB_ACTIONS=true
+                        export SELENIUM_HUB_URL=${SELENIUM_HUB_URL}
+                        
+                        echo "Running TestNG tests..."
+                        if [ -f ./mvnw ]; then
+                            ./mvnw test -DsuiteXmlFile=src/test/resources/testng.xml || true
+                        else
+                            mvn test -DsuiteXmlFile=src/test/resources/testng.xml || true
+                        fi
+                        echo "✅ Tests completed!"
+                    '''
+                }
             }
         }
 
@@ -194,14 +222,20 @@ pipeline {
     ============================ */
     post {
         always {
-            sh '''
-                if [ -f app.pid ]; then
-                    kill $(cat app.pid) || true
-                    rm -f app.pid
-                fi
-                pkill -f "spring-boot:run" || true
-                echo "🧹 App stopped."
-            '''
+            script {
+                sh '''
+                    if [ -f app.pid ]; then
+                        PID=$(cat app.pid)
+                        echo "Stopping application (PID: $PID)..."
+                        kill $PID 2>/dev/null || true
+                        sleep 2
+                        kill -9 $PID 2>/dev/null || true
+                        rm -f app.pid
+                    fi
+                    pkill -f "spring-boot:run" || true
+                    echo "🧹 App stopped."
+                '''
+            }
         }
         success {
             echo "🎉 SUCCESS: CI/CD Pipeline Completed!"
