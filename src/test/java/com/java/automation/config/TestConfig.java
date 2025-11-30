@@ -27,7 +27,7 @@ public class TestConfig {
     }
 
     public static String getBaseUrl() {
-        return properties.getProperty("base.url", "http://localhost:8080");
+        return properties.getProperty("base.url", "http://localhost:9090");
     }
 
     public static String getBrowser() {

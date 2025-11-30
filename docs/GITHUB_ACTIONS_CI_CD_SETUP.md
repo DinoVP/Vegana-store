@@ -55,7 +55,7 @@ git push origin main
 ### Test Configuration
 
 File: `src/test/resources/test.properties`
-- **Base URL**: `http://localhost:8080`
+- **Base URL**: `http://localhost:9090`
 - **Browser**: `chrome`
 - **Test Suite**: `src/test/resources/testng.xml`
 

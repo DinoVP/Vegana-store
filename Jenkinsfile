@@ -28,9 +28,9 @@ pipeline {
 
                     echo Waiting for Spring Boot to be ready...
 
-                    REM === Loop 40 lần để check http://localhost:8080 ===
+                    REM === Loop 40 lần để check http://localhost:9090 ===
                     for /l %%x in (1,1,40) do (
-                        curl -s http://localhost:8080 >nul
+                        curl -s http://localhost:9090 >nul
                         if %errorlevel%==0 (
                             echo Spring Boot is UP!
                             goto :done

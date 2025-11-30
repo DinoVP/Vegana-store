@@ -28,7 +28,7 @@ public class BaseTest {
     // ============================
     // CONFIG MẶC ĐỊNH
     // ============================
-    private final String BASE_URL = "http://localhost:8080";
+    private final String BASE_URL = "http://localhost:9090";
     private final int IMPLICIT_WAIT = 10;
     private final int PAGELOAD_WAIT = 20;
 

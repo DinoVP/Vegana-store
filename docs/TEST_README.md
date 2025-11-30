@@ -142,7 +142,7 @@ test-output/
 - **Java**: JDK 8+ (khuyến nghị JDK 17)
 - **Maven**: 3.6+
 - **Browser**: Chrome, Firefox, hoặc Edge
-- **Spring Boot Application**: Đang chạy tại `http://localhost:8080`
+- **Spring Boot Application**: Đang chạy tại `http://localhost:9090`
 
 ---
 
@@ -165,7 +165,7 @@ Chỉnh sửa file `src/test/resources/test.properties`:
 
 ```properties
 # Base URL của ứng dụng
-base.url=http://localhost:8080
+base.url=http://localhost:9090
 
 # Browser để chạy test (chrome, firefox, edge)
 browser=chrome
@@ -397,7 +397,7 @@ logger.error("Test failed: " + errorMessage);
 ### Lỗi: "Connection refused"
 
 **Giải pháp:**
-- Kiểm tra ứng dụng Spring Boot đang chạy tại `http://localhost:8080`
+- Kiểm tra ứng dụng Spring Boot đang chạy tại `http://localhost:9090`
 - Kiểm tra port trong `test.properties`
 - Kiểm tra firewall settings
 
