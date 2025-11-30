@@ -2,146 +2,147 @@ package com.java.automation.base;
 
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
-import com.java.automation.config.TestConfig;
 import com.java.automation.utils.ExtentReportManager;
-import com.java.automation.utils.LoggerUtil;
-import com.java.automation.utils.ScreenshotUtil;
-import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.*;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 
 /**
- * Base test class that sets up and tears down WebDriver
- * Includes Extent Reports, Logging, and Screenshot capabilities
+ * BaseTest chuẩn cho Selenium 4 + TestNG + Extent Report năm 2025
  */
 public class BaseTest {
+
     protected WebDriver driver;
-    protected Logger logger;
     protected ExtentTest extentTest;
 
+    // ============================
+    // CONFIG MẶC ĐỊNH
+    // ============================
+    private final String BASE_URL = "http://localhost:8080";
+    private final int IMPLICIT_WAIT = 10;
+    private final int PAGELOAD_WAIT = 20;
+
+    private final boolean IS_GITHUB =
+            System.getenv("GITHUB_ACTIONS") != null;   // auto detect pipeline
+
     @BeforeSuite
-    public void setUpSuite() {
-        // Initialize Extent Reports
+    public void setupSuite() {
         ExtentReportManager.getInstance();
-        logger = LoggerUtil.getLogger(this.getClass());
-        logger.info("Test Suite started");
+        System.out.println(">>> TEST SUITE STARTED");
     }
 
     @BeforeMethod
-    public void setUp(ITestResult result) {
-        String testName = result.getMethod().getMethodName();
-        String testDescription = result.getMethod().getDescription();
-        if (testDescription == null || testDescription.isEmpty()) {
-            testDescription = "Test: " + testName;
-        }
-        
-        // Create test in Extent Report
-        extentTest = ExtentReportManager.createTest(testName, testDescription);
-        
-        logger = LoggerUtil.getLogger(this.getClass());
-        logger.info("Starting test: " + testName);
-        String browser = TestConfig.getBrowser().toLowerCase();
-        
-        switch (browser) {
-            case "chrome":
-                ChromeOptions chromeOptions = new ChromeOptions();
-                // Browser sẽ tự động mở và hiển thị (không headless)
-                chromeOptions.addArguments("--start-maximized");
-                chromeOptions.addArguments("--disable-notifications");
-                chromeOptions.addArguments("--disable-infobars");
-                chromeOptions.addArguments("--disable-dev-shm-usage");
-                chromeOptions.addArguments("--no-sandbox");
-                // Đảm bảo browser hiển thị (không headless)
-                chromeOptions.setHeadless(false);
-                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
-                driver = new ChromeDriver(chromeOptions);
-                break;
-                
-            case "firefox":
-                FirefoxOptions firefoxOptions = new FirefoxOptions();
-                firefoxOptions.addArguments("--start-maximized");
-                // Đảm bảo browser hiển thị (không headless)
-                firefoxOptions.setHeadless(false);
-                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
-                driver = new FirefoxDriver(firefoxOptions);
-                break;
-                
-            case "edge":
-                ChromeOptions options = new ChromeOptions();
-                options.addArguments("--start-maximized");
-                options.addArguments("--disable-notifications");
-                options.addArguments("--disable-infobars");
-                options.addArguments("--disable-dev-shm-usage");
-                options.addArguments("--no-sandbox");
-                // Đảm bảo browser hiển thị (không headless)
-                options.setHeadless(false);
-                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
-                driver = new ChromeDriver(options);
-                break;
-                
-            default:
-                ChromeOptions defaultOptions = new ChromeOptions();
-                defaultOptions.addArguments("--start-maximized");
-                defaultOptions.addArguments("--disable-notifications");
-                defaultOptions.addArguments("--disable-infobars");
-                // Đảm bảo browser hiển thị (không headless)
-                defaultOptions.setHeadless(false);
-                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
-                driver = new ChromeDriver(defaultOptions);
-        }
+    public void setup(Method method) {
 
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TestConfig.getImplicitWait()));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(TestConfig.getPageLoadTimeout()));
-        driver.get(TestConfig.getBaseUrl());
-        
-        logger.info("Navigated to: " + TestConfig.getBaseUrl());
-        extentTest.log(Status.INFO, "Navigated to: " + TestConfig.getBaseUrl());
+        String testName = method.getName();
+        extentTest = ExtentReportManager.createTest(testName, "Running test: " + testName);
+
+        driver = setupBrowser("chrome");
+
+        // Timeouts
+        driver.manage().timeouts()
+                .implicitlyWait(Duration.ofSeconds(IMPLICIT_WAIT));
+        driver.manage().timeouts()
+                .pageLoadTimeout(Duration.ofSeconds(PAGELOAD_WAIT));
+
+        driver.get(BASE_URL);
+        extentTest.log(Status.INFO, "Navigate to: " + BASE_URL);
     }
 
+    // ============================
+    // BROWSER FACTORY – AUTO HEADLESS CHO GITHUB ACTIONS
+    // ============================
+    private WebDriver setupBrowser(String browserName) {
+
+        switch (browserName.toLowerCase()) {
+
+            case "firefox":
+                FirefoxOptions ff = new FirefoxOptions();
+                if (IS_GITHUB) {
+                    // GitHub Actions: chạy headless
+                    ff.addArguments("--headless");
+                } else {
+                    // Local: browser tự mở và hiển thị (mặc định không headless)
+                    ff.addArguments("--start-maximized");
+                }
+                return new FirefoxDriver(ff);
+
+            case "chrome":
+            default:
+                ChromeOptions co = new ChromeOptions();
+
+                if (IS_GITHUB) {
+                    // GitHub Actions: chạy headless
+                    co.addArguments("--headless=new");
+                    co.addArguments("--no-sandbox");
+                    co.addArguments("--disable-dev-shm-usage");
+                    co.addArguments("--disable-gpu");
+                } else {
+                    // Local: browser tự mở và hiển thị (mặc định không headless)
+                    co.addArguments("--start-maximized");
+                    co.addArguments("--disable-notifications");
+                    co.addArguments("--disable-infobars");
+                }
+
+                return new ChromeDriver(co);
+        }
+    }
+
+    // ============================
+    // TEARDOWN
+    // ============================
     @AfterMethod
     public void tearDown(ITestResult result) {
-        String testName = result.getMethod().getMethodName();
-        
-        // Log test result
+
+        String testName = result.getName();
+
         if (result.getStatus() == ITestResult.FAILURE) {
-            logger.error("Test FAILED: " + testName);
-            extentTest.log(Status.FAIL, "Test Failed: " + result.getThrowable().getMessage());
-            
-            // Take screenshot on failure
-            String screenshotPath = ScreenshotUtil.takeScreenshot(driver, testName + "_FAILED");
+
+            extentTest.log(Status.FAIL, "FAILED: " + result.getThrowable());
+            String screenshotPath = takeScreenshot(testName);
+
             if (screenshotPath != null) {
                 try {
                     extentTest.addScreenCaptureFromPath(screenshotPath);
-                    logger.info("Screenshot saved: " + screenshotPath);
-                } catch (Exception e) {
-                    logger.error("Error adding screenshot to report: " + e.getMessage());
-                }
+                } catch (Exception ignored) {}
             }
+
         } else if (result.getStatus() == ITestResult.SUCCESS) {
-            logger.info("Test PASSED: " + testName);
-            extentTest.log(Status.PASS, "Test Passed");
-        } else if (result.getStatus() == ITestResult.SKIP) {
-            logger.warn("Test SKIPPED: " + testName);
-            extentTest.log(Status.SKIP, "Test Skipped");
+            extentTest.log(Status.PASS, "PASSED");
+        } else {
+            extentTest.log(Status.SKIP, "SKIPPED");
         }
-        
-        // Close browser
-        if (driver != null) {
-            driver.quit();
-            logger.info("Browser closed");
-        }
-        
-        // Flush Extent Report
+
+        if (driver != null) driver.quit();
         ExtentReportManager.flush();
     }
-}
 
+    // ============================
+    // SCREENSHOT UTILITY
+    // ============================
+    private String takeScreenshot(String name) {
+        try {
+            File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+
+            String folder = "test-output/screenshots/";
+            Files.createDirectories(Paths.get(folder));
+
+            String path = folder + name + ".png";
+            Files.copy(src.toPath(), Paths.get(path));
+
+            return path;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}

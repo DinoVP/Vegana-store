@@ -35,7 +35,6 @@ public class LoginTestWithDataProvider extends BaseTest {
 
     @Test(dataProvider = "loginData", description = "Test đăng nhập với nhiều bộ dữ liệu khác nhau")
     public void testLoginWithDataProvider(String customerId, String password, String expectedResult) {
-        logger.info("Testing login with Customer ID: " + customerId + ", Expected: " + expectedResult);
         extentTest.log(com.aventstack.extentreports.Status.INFO, 
             "Testing login with Customer ID: " + customerId + ", Expected: " + expectedResult);
         
