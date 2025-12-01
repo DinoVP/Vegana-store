@@ -16,7 +16,7 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_ROOT_PASSWORD: 10112008
           MYSQL_DATABASE: vegana_store
         ports:
           - 3306:3306
