@@ -21,7 +21,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
+          --health-cmd="mysqladmin ping -h localhost -uroot -p10112008"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
@@ -53,7 +53,7 @@ jobs:
       - name: Wait for MySQL Ready
         run: |
           echo "⏳ Waiting for MySQL..."
-          timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p123456 --silent; do sleep 2; done'
+          timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p10112008 --silent; do sleep 2; done'
         env:
           MYSQL_PWD: 10112008
 
@@ -61,11 +61,11 @@ jobs:
       - name: Initialize Database
         run: |
           echo "Creating vegana_store database..."
-          mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
+          mysql -h 127.0.0.1 -uroot -p10112008 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
           
           if [ -f vegana.sql ]; then
             echo "Importing schema..."
-            mysql -h 127.0.0.1 -uroot -p123456 vegana_store < vegana.sql
+            mysql -h 127.0.0.1 -uroot -p10112008 vegana_store < vegana.sql
           else
             echo "⚠️ NO vegana.sql found — skipping import."
           fi
