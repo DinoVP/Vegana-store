@@ -37,7 +37,7 @@ public class PersistenceJPAConfig {
 		// Set collation to utf8mb4_general_ci to match existing database schema
 		dataSource.setUrl("jdbc:mysql://localhost:3306/vegana_store?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_general_ci");
 		dataSource.setUsername("root");
-		dataSource.setPassword("123456");
+		dataSource.setPassword("10112008");
 		return dataSource;
 	}
 
