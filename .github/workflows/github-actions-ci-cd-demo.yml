@@ -55,7 +55,7 @@ jobs:
           echo "⏳ Waiting for MySQL..."
           timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p123456 --silent; do sleep 2; done'
         env:
-          MYSQL_PWD: 123456
+          MYSQL_PWD: 10112008
 
       # --------------------------------------------------
       - name: Initialize Database
@@ -70,7 +70,7 @@ jobs:
             echo "⚠️ NO vegana.sql found — skipping import."
           fi
         env:
-          MYSQL_PWD: 123456
+          MYSQL_PWD: 10112008
 
       # --------------------------------------------------
       - name: Build Application (without running tests)
