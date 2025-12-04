@@ -21,7 +21,7 @@ Framework test automation chuyên nghiệp cho ứng dụng **Vegana Shop** sử
 - [Đóng góp](#-đóng-góp)
 - [License](#-license)
 
----
+------
 
 ## 🎯 Tổng quan
 
