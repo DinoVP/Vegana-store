@@ -18,12 +18,15 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 /**
- * BaseTest chuẩn cho Selenium 4 + TestNG + Extent Report năm 2025
+ * BaseTest chuẩn cho Selenium 4 + TestNG + Extent Report
  */
 public class BaseTest {
 
     protected WebDriver driver;
     protected ExtentTest extentTest;
+
+    // FIX: THÊM ThreadLocal để kiểm soát việc đóng trình duyệt
+    private static ThreadLocal<Boolean> shouldQuitDriver = ThreadLocal.withInitial(() -> true);
 
     // ============================
     // CONFIG MẶC ĐỊNH
@@ -63,16 +66,14 @@ public class BaseTest {
     // BROWSER FACTORY – AUTO HEADLESS CHO GITHUB ACTIONS
     // ============================
     private WebDriver setupBrowser(String browserName) {
-
+        // ... (Code setupBrowser giữ nguyên) ...
         switch (browserName.toLowerCase()) {
 
             case "firefox":
                 FirefoxOptions ff = new FirefoxOptions();
                 if (IS_GITHUB) {
-                    // GitHub Actions: chạy headless
                     ff.addArguments("--headless");
                 } else {
-                    // Local: browser tự mở và hiển thị (mặc định không headless)
                     ff.addArguments("--start-maximized");
                 }
                 return new FirefoxDriver(ff);
@@ -82,13 +83,11 @@ public class BaseTest {
                 ChromeOptions co = new ChromeOptions();
 
                 if (IS_GITHUB) {
-                    // GitHub Actions: chạy headless
                     co.addArguments("--headless=new");
                     co.addArguments("--no-sandbox");
                     co.addArguments("--disable-dev-shm-usage");
                     co.addArguments("--disable-gpu");
                 } else {
-                    // Local: browser tự mở và hiển thị (mặc định không headless)
                     co.addArguments("--start-maximized");
                     co.addArguments("--disable-notifications");
                     co.addArguments("--disable-infobars");
@@ -101,6 +100,12 @@ public class BaseTest {
     // ============================
     // TEARDOWN
     // ============================
+
+    // BỔ SUNG: Hàm ra lệnh KHÔNG ĐÓNG trình duyệt
+    public void setShouldQuit(boolean shouldQuit) {
+        shouldQuitDriver.set(shouldQuit);
+    }
+
     @AfterMethod
     public void tearDown(ITestResult result) {
 
@@ -123,7 +128,14 @@ public class BaseTest {
             extentTest.log(Status.SKIP, "SKIPPED");
         }
 
-        if (driver != null) driver.quit();
+        // FIX LOGIC: CHỈ ĐÓNG KHI shouldQuitDriver là TRUE
+        if (driver != null && shouldQuitDriver.get()) {
+            driver.quit();
+        }
+
+        // Luôn reset cờ về TRUE cho các test sau (trừ khi test đó lại set FALSE)
+        shouldQuitDriver.set(true);
+
         ExtentReportManager.flush();
     }
 

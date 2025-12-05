@@ -20,40 +20,40 @@ public class LoginTestWithDataProvider extends BaseTest {
     @DataProvider(name = "loginData")
     public Object[][] getLoginData() {
         return new Object[][] {
-            // Valid login
-            {TestConfig.getProperty("test.user.id"), TestConfig.getProperty("test.user.password"), "success"},
-            // Invalid customer ID
-            {"invalid_user", "123456", "error"},
-            // Invalid password
-            {TestConfig.getProperty("test.user.id"), "wrong_password", "error"},
-            // Empty customer ID
-            {"", "123456", "error"},
-            // Empty password
-            {TestConfig.getProperty("test.user.id"), "", "error"}
+                // Valid login
+                {TestConfig.getProperty("test.user.id"), TestConfig.getProperty("test.user.password"), "success"},
+                // Invalid customer ID
+                {"invalid_user", "123456", "error"},
+                // Invalid password
+                {TestConfig.getProperty("test.user.id"), "wrong_password", "error"},
+                // Empty customer ID
+                {"", "123456", "error"},
+                // Empty password
+                {TestConfig.getProperty("test.user.id"), "", "error"}
         };
     }
 
     @Test(dataProvider = "loginData", description = "Test đăng nhập với nhiều bộ dữ liệu khác nhau")
     public void testLoginWithDataProvider(String customerId, String password, String expectedResult) {
-        extentTest.log(com.aventstack.extentreports.Status.INFO, 
-            "Testing login with Customer ID: " + customerId + ", Expected: " + expectedResult);
-        
+        extentTest.log(com.aventstack.extentreports.Status.INFO,
+                "Testing login with Customer ID: " + customerId + ", Expected: " + expectedResult);
+
         LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
         loginPage.navigateToLoginPage();
-        
+
         loginPage.login(customerId, password);
-        
+
         if ("success".equals(expectedResult)) {
-            Assert.assertTrue(loginPage.isOnHomePage(), 
-                "Đăng nhập thành công nhưng không redirect về trang chủ");
+            // FIX: Sử dụng hàm isCustomerAccountDisplayed() đã được sửa
+            Assert.assertTrue(loginPage.isCustomerAccountDisplayed(),
+                    "Đăng nhập thành công nhưng không redirect về trang My Account");
             extentTest.log(com.aventstack.extentreports.Status.PASS, "Login successful");
         } else {
             // For error cases, should stay on login page or show error
             boolean isError = loginPage.isErrorAlertDisplayed() || loginPage.isOnLoginPage();
-            Assert.assertTrue(isError, 
-                "Không hiển thị lỗi khi đăng nhập với thông tin không hợp lệ");
+            Assert.assertTrue(isError,
+                    "Không hiển thị lỗi khi đăng nhập với thông tin không hợp lệ");
             extentTest.log(com.aventstack.extentreports.Status.PASS, "Error handled correctly");
         }
     }
 }
-

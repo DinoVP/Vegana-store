@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Vegana Shop Test Suite" parallel="false" verbose="1">
-    <test name="Login Tests">
+
+    <test name="Login/Register Tests">
         <classes>
             <class name="com.java.automation.tests.user.LoginTest"/>
+            <class name="com.java.automation.tests.user.RegisterTest"/>
+            <class name="com.java.automation.tests.user.LoginTestWithDataProvider"/>
         </classes>
     </test>
-    
-    <test name="Register Tests">
+
+    <test name="User Feature Tests">
         <classes>
-            <class name="com.java.automation.tests.user.RegisterTest"/>
+            <class name="com.java.automation.tests.user.UserFeatureTest"/>
+        </classes>
+    </test>
+
+    <test name="Admin Management Tests">
+        <classes>
+            <class name="com.java.automation.tests.admin.AdminManagementTest"/>
         </classes>
     </test>
 </suite>
-

@@ -11,11 +11,12 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 /**
- * Page Object Model for Login/Register page
+ * Page Object Model for Login/Register page - Optimized version
  */
 public class LoginOrRegisterPage {
-    private WebDriver driver;
-    private WebDriverWait wait;
+    private final WebDriver driver;
+    private final WebDriverWait wait;
+    private final Duration TIMEOUT = Duration.ofSeconds(10);
 
     // Login Tab
     @FindBy(xpath = "//a[contains(@href, '#signin')]")
@@ -54,9 +55,12 @@ public class LoginOrRegisterPage {
     // Alert Messages
     @FindBy(xpath = "//div[contains(@class, 'alert-danger')]")
     private WebElement errorAlert;
-
     @FindBy(xpath = "//div[contains(@class, 'alert-success')]")
     private WebElement successAlert;
+
+    // LOCATOR CHO TRANG ĐÍCH (TRANG MY ACCOUNT - TC1)
+    @FindBy(xpath = "//h2[contains(text(), 'Your Timeline')]")
+    private WebElement myAccountTimelineTitle; // Tiêu đề đặc trưng của trang My Account
 
     // Remember me checkbox
     @FindBy(id = "signin-check")
@@ -68,37 +72,36 @@ public class LoginOrRegisterPage {
 
     public LoginOrRegisterPage(WebDriver driver) {
         this.driver = driver;
-        // Selenium 4.x sử dụng Duration thay vì long (seconds)
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.wait = new WebDriverWait(driver, TIMEOUT);
         PageFactory.initElements(driver, this);
     }
 
-    // Navigation methods
+    // --- Navigation methods ---
+
     public void navigateToLoginPage() {
         String baseUrl = TestConfig.getBaseUrl();
-        // Đảm bảo baseUrl không kết thúc bằng "/" để tránh "//"
         if (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
         driver.get(baseUrl + "/login");
+        wait.until(ExpectedConditions.urlContains("/login"));
         wait.until(ExpectedConditions.visibilityOf(signInTab));
     }
 
     public void clickSignInTab() {
         wait.until(ExpectedConditions.elementToBeClickable(signInTab));
         signInTab.click();
-        // Wait for sign in form to be visible
         wait.until(ExpectedConditions.visibilityOf(loginCustomerIdInput));
     }
 
     public void clickSignUpTab() {
         wait.until(ExpectedConditions.elementToBeClickable(signUpTab));
         signUpTab.click();
-        // Wait for sign up form to be visible
         wait.until(ExpectedConditions.visibilityOf(registerCustomerIdInput));
     }
 
-    // Login methods
+    // --- Login methods ---
+
     public void enterLoginCustomerId(String customerId) {
         wait.until(ExpectedConditions.visibilityOf(loginCustomerIdInput));
         loginCustomerIdInput.clear();
@@ -114,18 +117,14 @@ public class LoginOrRegisterPage {
     public void clickSignInButton() {
         wait.until(ExpectedConditions.elementToBeClickable(signInButton));
         signInButton.click();
-        // Wait for page to process - either redirect to home or show error
+
         try {
-            // Wait a moment for page to process
-            Thread.sleep(500);
-            // Check if error alert appears (stays on login page)
-            try {
-                wait.until(ExpectedConditions.visibilityOf(errorAlert));
-            } catch (Exception e) {
-                // No error alert, might have redirected - that's OK
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            wait.until(ExpectedConditions.or(
+                    ExpectedConditions.not(ExpectedConditions.urlContains("/login")),
+                    ExpectedConditions.visibilityOf(errorAlert)
+            ));
+        } catch (Exception e) {
+            // Pass
         }
     }
 
@@ -142,7 +141,8 @@ public class LoginOrRegisterPage {
         }
     }
 
-    // Registration methods
+    // --- Registration methods (FIX LỖI BIÊN DỊCH) ---
+
     public void enterRegisterCustomerId(String customerId) {
         wait.until(ExpectedConditions.visibilityOf(registerCustomerIdInput));
         registerCustomerIdInput.clear();
@@ -170,24 +170,17 @@ public class LoginOrRegisterPage {
     public void clickSignUpButton() {
         wait.until(ExpectedConditions.elementToBeClickable(signUpButton));
         signUpButton.click();
-        // Wait for page to process - either show success/error alert or stay on page
         try {
-            // Wait a moment for page to process
-            Thread.sleep(500);
-            // Check if success or error alert appears
-            try {
-                wait.until(ExpectedConditions.or(
+            wait.until(ExpectedConditions.or(
                     ExpectedConditions.visibilityOf(successAlert),
                     ExpectedConditions.visibilityOf(errorAlert)
-                ));
-            } catch (Exception e) {
-                // No alert, validation might have prevented submission - that's OK
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            ));
+        } catch (Exception e) {
+            // Pass
         }
     }
 
+    // Phương thức tổng hợp cho Register
     public void register(String customerId, String fullname, String email, String password) {
         clickSignUpTab();
         enterRegisterCustomerId(customerId);
@@ -197,7 +190,9 @@ public class LoginOrRegisterPage {
         clickSignUpButton();
     }
 
-    // Validation methods
+
+    // --- Validation methods ---
+
     public boolean isErrorAlertDisplayed() {
         try {
             wait.until(ExpectedConditions.visibilityOf(errorAlert));
@@ -234,10 +229,23 @@ public class LoginOrRegisterPage {
         return driver.getCurrentUrl().contains("/login");
     }
 
-    public boolean isOnHomePage() {
-        String currentUrl = driver.getCurrentUrl();
-        return currentUrl.equals(TestConfig.getBaseUrl() + "/") || 
-               currentUrl.equals(TestConfig.getBaseUrl() + "/?login_success");
+    // --- SỬA LỖI XÁC THỰC TC1 ---
+    public boolean isCustomerAccountDisplayed() {
+        if (driver.getCurrentUrl().contains("/account")) {
+            try {
+                // Chờ tiêu đề "Your Timeline" hiển thị (Locator đã thêm)
+                return wait.until(ExpectedConditions.visibilityOf(myAccountTimelineTitle)).isDisplayed();
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Kiểm tra chuyển hướng thành công đến Dashboard (Admin - TC14)
+     */
+    public boolean isAdminDashboardDisplayed() {
+        return driver.getCurrentUrl().contains("/admin/dashboard");
     }
 }
-
