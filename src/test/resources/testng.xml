@@ -12,5 +12,17 @@
             <class name="com.java.automation.tests.user.RegisterTest"/>
         </classes>
     </test>
+    
+    <test name="Admin Tests">
+        <classes>
+            <class name="com.java.automation.tests.admin.AdminTest"/>
+        </classes>
+    </test>
+    
+    <test name="Admin Functions Tests">
+        <classes>
+            <class name="com.java.automation.tests.admin.AdminFunctionsTest"/>
+        </classes>
+    </test>
 </suite>
 
