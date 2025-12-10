@@ -35,6 +35,16 @@ public class ProductsPage {
     @FindBy(xpath = "//table[@id='add-row']//tbody//tr")
     private java.util.List<WebElement> productRows;
 
+    // Add Product Modal elements
+    @FindBy(xpath = "//div[@id='addRowModal']")
+    private WebElement addProductModal;
+
+    @FindBy(xpath = "//form[@action='/addProduct']//input[@name='name']")
+    private WebElement productNameInput;
+
+    @FindBy(xpath = "//form[@action='/addProduct']")
+    private WebElement addProductForm;
+
     public ProductsPage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(2));
@@ -121,6 +131,24 @@ public class ProductsPage {
             return productRows.size();
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    public boolean isAddProductModalDisplayed() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(addProductModal));
+            return addProductModal.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isAddProductFormDisplayed() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(addProductForm));
+            return addProductForm.isDisplayed();
+        } catch (Exception e) {
+            return false;
         }
     }
 }

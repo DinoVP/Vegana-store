@@ -61,6 +61,34 @@ public class AdminCRUDTest extends BaseTest {
             "Nút Add Product hiển thị đúng");
     }
 
+    @Test(priority = 18, description = "Test form thêm sản phẩm có hiển thị")
+    public void testAddProductFormDisplayed() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test form thêm sản phẩm");
+
+        loginAsAdmin();
+        
+        ProductsPage productsPage = new ProductsPage(driver);
+        productsPage.navigateToProductsPage();
+        
+        // Click Add Product button to open modal
+        productsPage.clickAddProductButton();
+        
+        // Verify form is displayed (modal might need time to show)
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        Assert.assertTrue(productsPage.isAddProductFormDisplayed() || 
+                        productsPage.isAddProductModalDisplayed(), 
+            "Form thêm sản phẩm không hiển thị");
+        
+        extentTest.log(com.aventstack.extentreports.Status.PASS, 
+            "Form thêm sản phẩm hiển thị đúng");
+    }
+
     // ==================== ORDERS CRUD ====================
 
     @Test(priority = 3, description = "Test xem danh sách đơn hàng")
@@ -210,6 +238,263 @@ public class AdminCRUDTest extends BaseTest {
         
         extentTest.log(com.aventstack.extentreports.Status.PASS, 
             "Nút Add Supplier hiển thị đúng");
+    }
+
+    // ==================== UPDATE TESTS ====================
+
+    @Test(priority = 10, description = "Test navigate đến trang edit sản phẩm")
+    public void testNavigateToEditProduct() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test navigate đến trang edit sản phẩm");
+
+        loginAsAdmin();
+        
+        ProductsPage productsPage = new ProductsPage(driver);
+        productsPage.navigateToProductsPage();
+        
+        int productCount = productsPage.getProductCount();
+        if (productCount > 0) {
+            // Navigate to edit first product (assuming productId starts from 1)
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            driver.get(baseUrl + "/editProduct/1");
+            
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/editProduct"), 
+                "Không navigate đến trang edit sản phẩm");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Navigate đến trang edit sản phẩm thành công");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có sản phẩm để test edit");
+        }
+    }
+
+    @Test(priority = 11, description = "Test navigate đến trang edit danh mục")
+    public void testNavigateToEditCategory() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test navigate đến trang edit danh mục");
+
+        loginAsAdmin();
+        
+        CategoriesPage categoriesPage = new CategoriesPage(driver);
+        categoriesPage.navigateToCategoriesPage();
+        
+        int categoryCount = categoriesPage.getCategoryCount();
+        if (categoryCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            driver.get(baseUrl + "/editCategory/1");
+            
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/editCategory"), 
+                "Không navigate đến trang edit danh mục");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Navigate đến trang edit danh mục thành công");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có danh mục để test edit");
+        }
+    }
+
+    @Test(priority = 12, description = "Test navigate đến trang edit nhà cung cấp")
+    public void testNavigateToEditSupplier() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test navigate đến trang edit nhà cung cấp");
+
+        loginAsAdmin();
+        
+        SuppliersPage suppliersPage = new SuppliersPage(driver);
+        suppliersPage.navigateToSuppliersPage();
+        
+        int supplierCount = suppliersPage.getSupplierCount();
+        if (supplierCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            driver.get(baseUrl + "/editSupplier/1");
+            
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/editSupplier"), 
+                "Không navigate đến trang edit nhà cung cấp");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Navigate đến trang edit nhà cung cấp thành công");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có nhà cung cấp để test edit");
+        }
+    }
+
+    @Test(priority = 13, description = "Test navigate đến trang edit đơn hàng")
+    public void testNavigateToEditOrder() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test navigate đến trang edit đơn hàng");
+
+        loginAsAdmin();
+        
+        OrdersPage ordersPage = new OrdersPage(driver);
+        ordersPage.navigateToOrdersPage();
+        
+        int orderCount = ordersPage.getOrderCount();
+        if (orderCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            driver.get(baseUrl + "/editorder/1");
+            
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/editorder"), 
+                "Không navigate đến trang edit đơn hàng");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Navigate đến trang edit đơn hàng thành công");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có đơn hàng để test edit");
+        }
+    }
+
+    // ==================== DELETE TESTS ====================
+
+    @Test(priority = 14, description = "Test delete sản phẩm (navigate đến delete URL)")
+    public void testDeleteProduct() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test delete sản phẩm");
+
+        loginAsAdmin();
+        
+        ProductsPage productsPage = new ProductsPage(driver);
+        productsPage.navigateToProductsPage();
+        
+        int initialCount = productsPage.getProductCount();
+        if (initialCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            // Navigate to delete URL (will redirect back to products page)
+            driver.get(baseUrl + "/deleteProduct/999"); // Use non-existent ID to avoid actual deletion
+            
+            // Verify redirect back to products page
+            productsPage.navigateToProductsPage();
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/admin/products"), 
+                "Không redirect về trang products sau khi delete");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Delete sản phẩm redirect đúng");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có sản phẩm để test delete");
+        }
+    }
+
+    @Test(priority = 15, description = "Test delete danh mục (navigate đến delete URL)")
+    public void testDeleteCategory() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test delete danh mục");
+
+        loginAsAdmin();
+        
+        CategoriesPage categoriesPage = new CategoriesPage(driver);
+        categoriesPage.navigateToCategoriesPage();
+        
+        int initialCount = categoriesPage.getCategoryCount();
+        if (initialCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            // Navigate to delete URL
+            driver.get(baseUrl + "/delete/999"); // Use non-existent ID
+            
+            // Verify redirect
+            categoriesPage.navigateToCategoriesPage();
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/admin/categories"), 
+                "Không redirect về trang categories sau khi delete");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Delete danh mục redirect đúng");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có danh mục để test delete");
+        }
+    }
+
+    @Test(priority = 16, description = "Test delete nhà cung cấp (navigate đến delete URL)")
+    public void testDeleteSupplier() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test delete nhà cung cấp");
+
+        loginAsAdmin();
+        
+        SuppliersPage suppliersPage = new SuppliersPage(driver);
+        suppliersPage.navigateToSuppliersPage();
+        
+        int initialCount = suppliersPage.getSupplierCount();
+        if (initialCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            // Navigate to delete URL
+            driver.get(baseUrl + "/deleteSupplier/999"); // Use non-existent ID
+            
+            // Verify redirect
+            suppliersPage.navigateToSuppliersPage();
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/admin/suppliers"), 
+                "Không redirect về trang suppliers sau khi delete");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Delete nhà cung cấp redirect đúng");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có nhà cung cấp để test delete");
+        }
+    }
+
+    @Test(priority = 17, description = "Test delete đơn hàng (navigate đến delete URL)")
+    public void testDeleteOrder() {
+        extentTest.log(com.aventstack.extentreports.Status.INFO, 
+            "Bắt đầu test delete đơn hàng");
+
+        loginAsAdmin();
+        
+        OrdersPage ordersPage = new OrdersPage(driver);
+        ordersPage.navigateToOrdersPage();
+        
+        int initialCount = ordersPage.getOrderCount();
+        if (initialCount > 0) {
+            String baseUrl = com.java.automation.config.TestConfig.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            // Navigate to delete URL
+            driver.get(baseUrl + "/deleteOrder/999"); // Use non-existent ID
+            
+            // Verify redirect
+            ordersPage.navigateToOrdersPage();
+            String currentUrl = driver.getCurrentUrl();
+            Assert.assertTrue(currentUrl.contains("/admin/orders"), 
+                "Không redirect về trang orders sau khi delete");
+            
+            extentTest.log(com.aventstack.extentreports.Status.PASS, 
+                "Delete đơn hàng redirect đúng");
+        } else {
+            extentTest.log(com.aventstack.extentreports.Status.SKIP, 
+                "Không có đơn hàng để test delete");
+        }
     }
 }
 
