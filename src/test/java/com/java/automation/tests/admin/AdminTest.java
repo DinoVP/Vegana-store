@@ -25,13 +25,6 @@ public class AdminTest extends BaseTest {
         // Đăng nhập với tài khoản admin
         loginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
         
-        // Đợi một chút để redirect
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        
         // Verify redirect to admin dashboard
         String currentUrl = driver.getCurrentUrl();
         Assert.assertTrue(currentUrl.contains("/admin/home"), 
@@ -50,13 +43,6 @@ public class AdminTest extends BaseTest {
         LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
         loginPage.navigateToLoginPage();
         loginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
-        
-        // Đợi redirect
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         
         // Khởi tạo AdminPage
         AdminPage adminPage = new AdminPage(driver);
@@ -97,13 +83,6 @@ public class AdminTest extends BaseTest {
         LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
         loginPage.navigateToLoginPage();
         loginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
-        
-        // Đợi redirect
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         
         AdminPage adminPage = new AdminPage(driver);
         

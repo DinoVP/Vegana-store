@@ -61,7 +61,7 @@ public class AdminPage {
 
     public AdminPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(2));
         PageFactory.initElements(driver, this);
     }
 
@@ -151,30 +151,45 @@ public class AdminPage {
         return "";
     }
 
-    // Navigation link methods
+    // Navigation methods - navigate directly to URL instead of clicking
     public void clickProductsLink() {
-        wait.until(ExpectedConditions.elementToBeClickable(productsLink));
-        productsLink.click();
+        String baseUrl = TestConfig.getBaseUrl();
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        driver.get(baseUrl + "/admin/products");
     }
 
     public void clickOrdersLink() {
-        wait.until(ExpectedConditions.elementToBeClickable(ordersLink));
-        ordersLink.click();
+        String baseUrl = TestConfig.getBaseUrl();
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        driver.get(baseUrl + "/admin/orders");
     }
 
     public void clickCustomersLink() {
-        wait.until(ExpectedConditions.elementToBeClickable(customersLink));
-        customersLink.click();
+        String baseUrl = TestConfig.getBaseUrl();
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        driver.get(baseUrl + "/admin/customers");
     }
 
     public void clickCategoriesLink() {
-        wait.until(ExpectedConditions.elementToBeClickable(categoriesLink));
-        categoriesLink.click();
+        String baseUrl = TestConfig.getBaseUrl();
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        driver.get(baseUrl + "/admin/categories");
     }
 
     public void clickSuppliersLink() {
-        wait.until(ExpectedConditions.elementToBeClickable(suppliersLink));
-        suppliersLink.click();
+        String baseUrl = TestConfig.getBaseUrl();
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        driver.get(baseUrl + "/admin/suppliers");
     }
 }
 

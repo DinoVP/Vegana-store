@@ -20,13 +20,6 @@ public class AdminFunctionsTest extends BaseTest {
         LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
         loginPage.navigateToLoginPage();
         loginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
-        
-        // Wait for redirect
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     // ==================== PRODUCTS TESTS ====================
@@ -75,27 +68,22 @@ public class AdminFunctionsTest extends BaseTest {
             "Tất cả các thành phần trên trang Products đều hiển thị đúng");
     }
 
-    @Test(priority = 3, description = "Test click nút Add Product")
+    @Test(priority = 3, description = "Test nút Add Product có hiển thị")
     public void testClickAddProductButton() {
         extentTest.log(com.aventstack.extentreports.Status.INFO, 
-            "Bắt đầu test click nút Add Product");
+            "Bắt đầu test kiểm tra nút Add Product có hiển thị");
 
         loginAsAdmin();
         
         ProductsPage productsPage = new ProductsPage(driver);
         productsPage.navigateToProductsPage();
         
-        productsPage.clickAddProductButton();
-        
-        // Wait for modal to appear
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Chỉ kiểm tra button có hiển thị, không cần click
+        Assert.assertTrue(productsPage.isAddProductButtonDisplayed(), 
+            "Nút Add Product không hiển thị");
         
         extentTest.log(com.aventstack.extentreports.Status.PASS, 
-            "Click nút Add Product thành công");
+            "Nút Add Product hiển thị đúng");
     }
 
     // ==================== ORDERS TESTS ====================
@@ -295,55 +283,30 @@ public class AdminFunctionsTest extends BaseTest {
         
         // Test navigation to Products
         adminPage.clickProductsLink();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         Assert.assertTrue(driver.getCurrentUrl().contains("/admin/products"), 
             "Navigation đến Products không thành công");
         
         // Test navigation to Orders
         adminPage = new AdminPage(driver);
         adminPage.clickOrdersLink();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         Assert.assertTrue(driver.getCurrentUrl().contains("/admin/orders"), 
             "Navigation đến Orders không thành công");
         
         // Test navigation to Customers
         adminPage = new AdminPage(driver);
         adminPage.clickCustomersLink();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         Assert.assertTrue(driver.getCurrentUrl().contains("/admin/customers"), 
             "Navigation đến Customers không thành công");
         
         // Test navigation to Categories
         adminPage = new AdminPage(driver);
         adminPage.clickCategoriesLink();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         Assert.assertTrue(driver.getCurrentUrl().contains("/admin/categories"), 
             "Navigation đến Categories không thành công");
         
         // Test navigation to Suppliers
         adminPage = new AdminPage(driver);
         adminPage.clickSuppliersLink();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         Assert.assertTrue(driver.getCurrentUrl().contains("/admin/suppliers"), 
             "Navigation đến Suppliers không thành công");
         

@@ -24,8 +24,8 @@ public class ProductsPage {
     @FindBy(xpath = "//h4[contains(@class, 'card-title') and contains(text(), 'Product Management')]")
     private WebElement cardTitle;
 
-    // Add Product Button
-    @FindBy(xpath = "//button[contains(@class, 'btn-primary') and contains(text(), 'Add Product')]")
+    // Add Product Button - using data-target attribute
+    @FindBy(xpath = "//button[@data-target='#addRowModal']")
     private WebElement addProductButton;
 
     // Table elements
@@ -37,7 +37,7 @@ public class ProductsPage {
 
     public ProductsPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(2));
         PageFactory.initElements(driver, this);
     }
 
@@ -78,7 +78,14 @@ public class ProductsPage {
             wait.until(ExpectedConditions.visibilityOf(addProductButton));
             return addProductButton.isDisplayed();
         } catch (Exception e) {
-            return false;
+            // Try alternative xpath if first one fails
+            try {
+                WebElement altButton = driver.findElement(
+                    org.openqa.selenium.By.xpath("//button[contains(@class, 'btn-primary') and contains(., 'Add Product')]"));
+                return altButton.isDisplayed();
+            } catch (Exception e2) {
+                return false;
+            }
         }
     }
 
@@ -92,8 +99,20 @@ public class ProductsPage {
     }
 
     public void clickAddProductButton() {
-        wait.until(ExpectedConditions.elementToBeClickable(addProductButton));
-        addProductButton.click();
+        try {
+            wait.until(ExpectedConditions.visibilityOf(addProductButton));
+            // Try to click, if fails use JavaScript
+            try {
+                addProductButton.click();
+            } catch (Exception e) {
+                // Fallback to JavaScript click
+                ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("arguments[0].click();", addProductButton);
+            }
+        } catch (Exception e) {
+            // Button might not be visible, that's OK for test
+            throw new RuntimeException("Cannot click Add Product button: " + e.getMessage(), e);
+        }
     }
 
     public int getProductCount() {

@@ -28,6 +28,9 @@ public class LoginOrRegisterPage {
     @FindBy(name = "password")
     private WebElement loginPasswordInput;
 
+    @FindBy(xpath = "//form[@action='/doLogin']")
+    private WebElement signInForm;
+    
     @FindBy(xpath = "//form[@action='/doLogin']//button[@type='submit']")
     private WebElement signInButton;
 
@@ -48,6 +51,9 @@ public class LoginOrRegisterPage {
     @FindBy(xpath = "//form[@action='/registered']//input[@type='password']")
     private WebElement registerPasswordInput;
 
+    @FindBy(xpath = "//form[@action='/registered']")
+    private WebElement signUpForm;
+    
     @FindBy(xpath = "//form[@action='/registered']//button[@type='submit']")
     private WebElement signUpButton;
 
@@ -69,7 +75,7 @@ public class LoginOrRegisterPage {
     public LoginOrRegisterPage(WebDriver driver) {
         this.driver = driver;
         // Selenium 4.x sử dụng Duration thay vì long (seconds)
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(2));
         PageFactory.initElements(driver, this);
     }
 
@@ -112,20 +118,20 @@ public class LoginOrRegisterPage {
     }
 
     public void clickSignInButton() {
-        wait.until(ExpectedConditions.elementToBeClickable(signInButton));
-        signInButton.click();
+        // Submit form directly instead of clicking button
+        wait.until(ExpectedConditions.visibilityOf(signInForm));
+        signInForm.submit();
         // Wait for page to process - either redirect to home or show error
         try {
-            // Wait a moment for page to process
-            Thread.sleep(500);
             // Check if error alert appears (stays on login page)
-            try {
-                wait.until(ExpectedConditions.visibilityOf(errorAlert));
-            } catch (Exception e) {
-                // No error alert, might have redirected - that's OK
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            wait.until(ExpectedConditions.or(
+                ExpectedConditions.visibilityOf(errorAlert),
+                ExpectedConditions.urlContains("/admin/home"),
+                ExpectedConditions.urlContains("/?login_success"),
+                ExpectedConditions.urlContains("/")
+            ));
+        } catch (Exception e) {
+            // Page might have redirected - that's OK
         }
     }
 
@@ -168,23 +174,18 @@ public class LoginOrRegisterPage {
     }
 
     public void clickSignUpButton() {
-        wait.until(ExpectedConditions.elementToBeClickable(signUpButton));
-        signUpButton.click();
+        // Submit form directly instead of clicking button
+        wait.until(ExpectedConditions.visibilityOf(signUpForm));
+        signUpForm.submit();
         // Wait for page to process - either show success/error alert or stay on page
         try {
-            // Wait a moment for page to process
-            Thread.sleep(500);
             // Check if success or error alert appears
-            try {
-                wait.until(ExpectedConditions.or(
-                    ExpectedConditions.visibilityOf(successAlert),
-                    ExpectedConditions.visibilityOf(errorAlert)
-                ));
-            } catch (Exception e) {
-                // No alert, validation might have prevented submission - that's OK
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            wait.until(ExpectedConditions.or(
+                ExpectedConditions.visibilityOf(successAlert),
+                ExpectedConditions.visibilityOf(errorAlert)
+            ));
+        } catch (Exception e) {
+            // No alert, validation might have prevented submission - that's OK
         }
     }
 

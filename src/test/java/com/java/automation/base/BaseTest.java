@@ -29,8 +29,8 @@ public class BaseTest {
     // CONFIG MẶC ĐỊNH
     // ============================
     private final String BASE_URL = "http://localhost:9090";
-    private final int IMPLICIT_WAIT = 10;
-    private final int PAGELOAD_WAIT = 20;
+    private final int IMPLICIT_WAIT = 2;
+    private final int PAGELOAD_WAIT = 5;
 
     private final boolean IS_GITHUB =
             System.getenv("GITHUB_ACTIONS") != null;   // auto detect pipeline
