@@ -25,7 +25,7 @@ public class CategoriesPage {
     private WebElement cardTitle;
 
     // Add Category Button
-    @FindBy(xpath = "//button[contains(@class, 'btn-primary') and contains(text(), 'Add Category')]")
+    @FindBy(xpath = "//button[@data-target='#addRowModal']")
     private WebElement addCategoryButton;
 
     // Add modal + fields

@@ -11,6 +11,7 @@ import com.java.automation.pages.SuppliersPage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -150,7 +151,12 @@ public class AdminTest extends BaseTest {
         String discount = "25";     // DOUBLE
         String enteredDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE); // DATE format YYYY-MM-DD
         String description = "Auto generated product for UI test"; // VARCHAR(255)
-        String imagePath = "/home/khai/Desktop/github/Vegana-Automation-Testing/upload/image/coca-cola.jpg"; // VARCHAR(255)
+        String imagePath = Paths.get(
+                System.getProperty("user.dir"),
+                "upload",
+                "image",
+                "coca-cola.jpg"
+        ).toString();
 
         productsPage.createProduct(productName, price, quantity, discount, enteredDate, description, imagePath);
         Assert.assertNotNull(productsPage.findProductRow(productName), "Không tìm thấy sản phẩm vừa thêm");

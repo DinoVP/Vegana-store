@@ -25,7 +25,7 @@ public class SuppliersPage {
     private WebElement cardTitle;
 
     // Add Supplier Button
-    @FindBy(xpath = "//button[contains(@class, 'btn-primary') and contains(text(), 'Add Supplier')]")
+    @FindBy(xpath = "//button[@data-target='#addRowModal']")
     private WebElement addSupplierButton;
 
     @FindBy(id = "addRowModal")
