@@ -1,4 +1,4 @@
-name: Vegana Shop CI Pipeline
+name: Vegana Shop CI Pipeline (Optimized)
 
 on:
   push:
@@ -14,6 +14,7 @@ jobs:
   automation-tests:
     name: Run Spring Boot + Selenium Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Đặt giới hạn thời gian cho job
 
     services:
       mysql:
@@ -40,14 +41,12 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 1. TỐI ƯU: Đảm bảo môi trường headless cho Selenium Chrome
+      # Cải tiến: Thêm libgbm-dev để fix lỗi Headless Chrome (Rất quan trọng cho GitHub Actions)
       - name: Install Dependencies & Chrome
         run: |
           sudo apt-get update
-          # Cài đặt MySQL Client và các thư viện cần thiết
-          sudo apt-get install -y default-mysql-client libgtk-3-0 libxss1 libasound2 libgbm-dev
-          # Cài đặt Chromium/Chrome (cần cho Selenium chạy headless)
-          sudo apt-get install -y chromium-browser || true
+          sudo apt-get install -y default-mysql-client libgbm-dev
+          sudo apt-get install -y chromium-browser || true # Cài Chrome/Chromium
 
       - name: Wait for MySQL Ready
         env: { MYSQL_PWD: 123456 }
@@ -61,10 +60,10 @@ jobs:
           echo "Creating vegana_store database..."
           mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
           if [ -f vegana.sql ]; then
-            echo "Importing schema..."
+            echo "Importing schema and data..."
             mysql -h 127.0.0.1 -uroot -p123456 vegana_store < vegana.sql
           else
-            echo "⚠️ NO vegana.sql found — skipping import. (Ensure DB is populated for tests)"
+            echo "⚠️ NO vegana.sql found — skipping import."
           fi
 
       - name: Build Application (skip tests)
@@ -73,23 +72,23 @@ jobs:
       - name: Start Spring Boot Application
         run: |
           echo "🚀 Starting Spring Boot..."
-          # Chạy ứng dụng trong nền
+          # Chạy bằng Java -jar, tin cậy hơn so với mvn spring-boot:run trong nền
           nohup java -jar target/*.jar > app.log 2>&1 & 
           echo "⏳ Waiting for backend to start (Max 60s)..."
           
-          # Cải tiến: Dùng loop/check để chờ backend sẵn sàng (tăng độ tin cậy)
+          # Cải tiến: Dùng loop/check để chờ backend sẵn sàng
           timeout 60 bash -c 'until curl -f http://localhost:9090; do sleep 5; done' || (echo "App failed to start on 9090" && exit 1)
 
       - name: Run Automation Tests (Selenium + TestNG)
-        # Sử dụng file testng.xml tùy chỉnh (VD: full-test-suite.xml)
+        # SỬ DỤNG FILE TESTNG TỔNG HỢP (full-test-suite.xml)
         run: |
           mkdir -p test-output/reports test-output/screenshots test-output/logs
-          echo "Running Full Test Suite..."
-          # Đảm bảo đường dẫn file testng.xml đúng (giả định bạn dùng full-test-suite.xml)
+          echo "Running Full Test Suite (TC1-TC22)..."
+          # Giả định file suite nằm ở thư mục gốc
           mvn -q test -DsuiteXmlFile=full-test-suite.xml
-        continue-on-error: true # demo: không chặn pipeline
+        continue-on-error: true
 
-      # --- Các bước Upload Reports giữ nguyên ---
+      # --- Upload Reports ---
 
       - name: Upload Test Reports
         if: always()
@@ -124,8 +123,8 @@ jobs:
     name: Docker CD (Build & Push to Docker Hub)
     runs-on: ubuntu-latest
     needs: automation-tests
-    # CHỈ CHẠY NẾU AUTOMATION TESTS PASSED
-    if: success(github.event.pull_request.head.sha) || github.ref == 'refs/heads/main'
+    # CHỈ CHẠY NẾU automation-tests THÀNH CÔNG
+    if: needs.automation-tests.result == 'success'
 
     steps:
       - name: Checkout Code
