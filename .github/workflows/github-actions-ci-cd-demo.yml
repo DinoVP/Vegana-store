@@ -1,175 +1,4 @@
-name: Vegana Shop CI Pipeline (Final Fixes)
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch:
-
-jobs:
-  # =========================================
-  # CI JOB: Build + run app + Selenium tests
-  # =========================================
-  automation-tests:
-    name: Run Spring Boot + Selenium Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: 10112008
-          MYSQL_DATABASE: vegana_store
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=10
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      # FIX: Chia nhỏ bước cài đặt để tránh lỗi exit code 100 (lỗi libxss1)
-      - name: Install MySQL Client and core libs
-        run: sudo apt-get install -y default-mysql-client libgbm-dev libxss1 libasound2 libnss3 libfontconfig1
-
-      - name: Install Chrome
-        run: sudo apt-get install -y chromium-browser || true
-
-      - name: Wait for MySQL Ready
-        env: { MYSQL_PWD: 10112008 }
-        run: |
-          echo "⏳ Waiting for MySQL..."
-          timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p10112008 --silent; do sleep 2; done'
-
-      - name: Initialize Database
-        env: { MYSQL_PWD: 10112008 }
-        run: |
-          echo "Creating vegana_store database..."
-          mysql -h 127.0.0.1 -uroot -p10112008 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
-          if [ -f vegana.sql ]; then
-            echo "Importing schema and data..."
-            mysql -h 127.0.0.1 -uroot -p10112008 vegana_store < vegana.sql
-          else
-            echo "⚠️ NO vegana.sql found — skipping import. DB may be empty."
-          fi
-
-      - name: Build Application (skip tests)
-        run: mvn -q -DskipTests clean package
-
-      # Tối ưu hóa khởi động ứng dụng và kiểm tra sức khỏe
-      - name: Start Spring Boot Application and Check Health
-        id: start_app
-        run: |
-          echo "🚀 Starting Spring Boot..."
-          nohup java -jar target/*.jar > app.log 2>&1 & 
-          
-          echo "⏳ Waiting for backend to start (Max 90s)..."
-          
-          sleep_time=5
-          max_checks=18 
-          
-          for i in $(seq 1 $max_checks); do
-            # Kiểm tra mã phản hồi (200/404 nghĩa là ứng dụng đã chạy, 500 nghĩa là lỗi runtime)
-            response_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9090 || true)
-            if [ "$response_code" -ne 0 ] && [ "$response_code" -ne 500 ] && [ "$response_code" -ne 000 ]; then
-              echo "✅ App is responsive on port 9090. HTTP Code: $response_code"
-              exit 0
-            fi
-            echo "Attempt $i: App status code is $response_code. Waiting $sleep_time seconds..."
-            sleep $sleep_time
-          done
-          
-          echo "❌ App failed to become healthy within the timeout."
-          cat app.log
-          exit 1
-
-
-      - name: Run Automation Tests (Selenium + TestNG)
-        # Sử dụng file testng.xml tùy chỉnh (giả định dùng full-test-suite.xml)
-        run: |
-          mkdir -p test-output/reports test-output/screenshots test-output/logs
-          echo "Running Full Test Suite (TC1-TC22)..."
-          # Lệnh này sẽ chạy sau khi BaseTest và AdminTest đã được sửa lỗi driver null
-          mvn -q test -DsuiteXmlFile=full-test-suite.xml
-        continue-on-error: false
-
-      # --- Upload Reports ---
-
-      - name: Upload Test Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-report
-          path: test-output/
-          retention-days: 14
-
-      - name: Upload Surefire Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: surefire-reports
-          path: target/surefire-reports/
-
-      - name: Upload App Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-log
-          path: app.log
-
-      - name: Cleanup
-        if: always()
-        run: pkill -f "java -jar" || pkill -f "spring-boot:run" || true
-
-  # =========================================
-  # CD JOB: Build & push Docker image
-  # =========================================
-  docker-cd:
-    name: Docker CD (Build & Push to Docker Hub)
-    runs-on: ubuntu-latest
-    needs: automation-tests
-    # CHỈ CHẠY NẾU automation-tests THÀNH CÔNG
-    if: needs.automation-tests.result == 'success'
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Build JAR for Image (skip tests)
-        run: mvn -q -DskipTests clean package
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push (docker/build-push-action)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_USER }}/vegana-shop:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-#name: Vegana Shop CI Pipeline
+#name: Vegana Shop CI Pipeline (Final Fixes)
 #
 #on:
 #  push:
@@ -185,6 +14,7 @@ jobs:
 #  automation-tests:
 #    name: Run Spring Boot + Selenium Tests
 #    runs-on: ubuntu-latest
+#    timeout-minutes: 15
 #
 #    services:
 #      mysql:
@@ -195,7 +25,7 @@ jobs:
 #        ports:
 #          - 3306:3306
 #        options: >-
-#          --health-cmd="mysqladmin ping -h localhost -uroot -p10112008"
+#          --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
 #          --health-interval=5s
 #          --health-timeout=5s
 #          --health-retries=10
@@ -211,15 +41,12 @@ jobs:
 #          distribution: 'temurin'
 #          cache: maven
 #
-#      # (Tùy chọn) Cài Chrome nếu test Selenium của bạn cần Chrome system.
-#      # Nếu bạn dùng WebDriverManager tự tải driver + Chromium thì có thể bỏ.
-#      - name: Install Chrome
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium || true
+#      # FIX: Chia nhỏ bước cài đặt để tránh lỗi exit code 100 (lỗi libxss1)
+#      - name: Install MySQL Client and core libs
+#        run: sudo apt-get install -y default-mysql-client libgbm-dev libxss1 libasound2 libnss3 libfontconfig1
 #
-#      - name: Install MySQL Client
-#        run: sudo apt-get install -y default-mysql-client
+#      - name: Install Chrome
+#        run: sudo apt-get install -y chromium-browser || true
 #
 #      - name: Wait for MySQL Ready
 #        env: { MYSQL_PWD: 10112008 }
@@ -233,28 +60,53 @@ jobs:
 #          echo "Creating vegana_store database..."
 #          mysql -h 127.0.0.1 -uroot -p10112008 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
 #          if [ -f vegana.sql ]; then
-#            echo "Importing schema..."
+#            echo "Importing schema and data..."
 #            mysql -h 127.0.0.1 -uroot -p10112008 vegana_store < vegana.sql
 #          else
-#            echo "⚠️ NO vegana.sql found — skipping import."
+#            echo "⚠️ NO vegana.sql found — skipping import. DB may be empty."
 #          fi
 #
 #      - name: Build Application (skip tests)
 #        run: mvn -q -DskipTests clean package
 #
-#      - name: Start Spring Boot Application
+#      # Tối ưu hóa khởi động ứng dụng và kiểm tra sức khỏe
+#      - name: Start Spring Boot Application and Check Health
+#        id: start_app
 #        run: |
 #          echo "🚀 Starting Spring Boot..."
-#          nohup mvn spring-boot:run > app.log 2>&1 &
-#          echo "⏳ Waiting for backend to start..."
-#          sleep 40
-#          curl -f http://localhost:9090 || (echo "App not up on 9090" && exit 1)
+#          nohup java -jar target/*.jar > app.log 2>&1 &
+#
+#          echo "⏳ Waiting for backend to start (Max 90s)..."
+#
+#          sleep_time=5
+#          max_checks=18
+#
+#          for i in $(seq 1 $max_checks); do
+#            # Kiểm tra mã phản hồi (200/404 nghĩa là ứng dụng đã chạy, 500 nghĩa là lỗi runtime)
+#            response_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9090 || true)
+#            if [ "$response_code" -ne 0 ] && [ "$response_code" -ne 500 ] && [ "$response_code" -ne 000 ]; then
+#              echo "✅ App is responsive on port 9090. HTTP Code: $response_code"
+#              exit 0
+#            fi
+#            echo "Attempt $i: App status code is $response_code. Waiting $sleep_time seconds..."
+#            sleep $sleep_time
+#          done
+#
+#          echo "❌ App failed to become healthy within the timeout."
+#          cat app.log
+#          exit 1
+#
 #
 #      - name: Run Automation Tests (Selenium + TestNG)
+#        # Sử dụng file testng.xml tùy chỉnh (giả định dùng full-test-suite.xml)
 #        run: |
 #          mkdir -p test-output/reports test-output/screenshots test-output/logs
-#          mvn -q test -DsuiteXmlFile=src/test/resources/testng.xml
-#        continue-on-error: true   # demo: không chặn pipeline
+#          echo "Running Full Test Suite (TC1-TC22)..."
+#          # Lệnh này sẽ chạy sau khi BaseTest và AdminTest đã được sửa lỗi driver null
+#          mvn -q test -DsuiteXmlFile=full-test-suite.xml
+#        continue-on-error: false
+#
+#      # --- Upload Reports ---
 #
 #      - name: Upload Test Reports
 #        if: always()
@@ -280,17 +132,17 @@ jobs:
 #
 #      - name: Cleanup
 #        if: always()
-#        run: pkill -f "spring-boot:run" || true
+#        run: pkill -f "java -jar" || pkill -f "spring-boot:run" || true
 #
 #  # =========================================
 #  # CD JOB: Build & push Docker image
-#  # Luôn chạy dù CI pass/fail
 #  # =========================================
 #  docker-cd:
 #    name: Docker CD (Build & Push to Docker Hub)
 #    runs-on: ubuntu-latest
 #    needs: automation-tests
-#    if: always()
+#    # CHỈ CHẠY NẾU automation-tests THÀNH CÔNG
+#    if: needs.automation-tests.result == 'success'
 #
 #    steps:
 #      - name: Checkout Code
@@ -316,3 +168,151 @@ jobs:
 #          tags: ${{ secrets.DOCKER_HUB_USER }}/vegana-shop:latest
 #          cache-from: type=gha
 #          cache-to: type=gha,mode=max
+
+name: Vegana Shop CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  # =========================================
+  # CI JOB: Build + run app + Selenium tests
+  # =========================================
+  automation-tests:
+    name: Run Spring Boot + Selenium Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 10112008
+          MYSQL_DATABASE: vegana_store
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -p10112008"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      # (Tùy chọn) Cài Chrome nếu test Selenium của bạn cần Chrome system.
+      # Nếu bạn dùng WebDriverManager tự tải driver + Chromium thì có thể bỏ.
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium || true
+
+      - name: Install MySQL Client
+        run: sudo apt-get install -y default-mysql-client
+
+      - name: Wait for MySQL Ready
+        env: { MYSQL_PWD: 10112008 }
+        run: |
+          echo "⏳ Waiting for MySQL..."
+          timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p10112008 --silent; do sleep 2; done'
+
+      - name: Initialize Database
+        env: { MYSQL_PWD: 10112008 }
+        run: |
+          echo "Creating vegana_store database..."
+          mysql -h 127.0.0.1 -uroot -p10112008 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
+          if [ -f vegana.sql ]; then
+            echo "Importing schema..."
+            mysql -h 127.0.0.1 -uroot -p10112008 vegana_store < vegana.sql
+          else
+            echo "⚠️ NO vegana.sql found — skipping import."
+          fi
+
+      - name: Build Application (skip tests)
+        run: mvn -q -DskipTests clean package
+
+      - name: Start Spring Boot Application
+        run: |
+          echo "🚀 Starting Spring Boot..."
+          nohup mvn spring-boot:run > app.log 2>&1 &
+          echo "⏳ Waiting for backend to start..."
+          sleep 40
+          curl -f http://localhost:9090 || (echo "App not up on 9090" && exit 1)
+
+      - name: Run Automation Tests (Selenium + TestNG)
+        run: |
+          mkdir -p test-output/reports test-output/screenshots test-output/logs
+          mvn -q test -DsuiteXmlFile=src/test/resources/testng.xml
+        continue-on-error: true   # demo: không chặn pipeline
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test-output/
+          retention-days: 14
+
+      - name: Upload Surefire Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      - name: Upload App Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-log
+          path: app.log
+
+      - name: Cleanup
+        if: always()
+        run: pkill -f "spring-boot:run" || true
+
+  # =========================================
+  # CD JOB: Build & push Docker image
+  # Luôn chạy dù CI pass/fail
+  # =========================================
+  docker-cd:
+    name: Docker CD (Build & Push to Docker Hub)
+    runs-on: ubuntu-latest
+    needs: automation-tests
+    if: always()
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build JAR for Image (skip tests)
+        run: mvn -q -DskipTests clean package
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push (docker/build-push-action)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USER }}/vegana-shop:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
