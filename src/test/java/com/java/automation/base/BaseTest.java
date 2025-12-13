@@ -2,6 +2,7 @@ package com.java.automation.base;
 
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
+import com.java.automation.pages.*; // Cần import tất cả Page Objects
 import com.java.automation.utils.ExtentReportManager;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -18,12 +19,27 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 /**
- * BaseTest chuẩn cho Selenium 4 + TestNG + Extent Report năm 2025
+ * BaseTest chuẩn cho Selenium 4 + TestNG + Extent Report năm 2025 (ĐÃ FIX LỖI INIT PO)
  */
 public class BaseTest {
 
     protected WebDriver driver;
     protected ExtentTest extentTest;
+
+    // KHAI BÁO TẤT CẢ PAGE OBJECTS (protected) - FIX LỖI DRIVER NULL
+    protected LoginOrRegisterPage loginPage;
+    protected CategoriesPage categoriesPage;
+    protected EditCategoryPage editCategoryPage;
+    protected SuppliersPage suppliersPage;
+    protected EditSupplierPage editSupplierPage;
+    protected ProductsPage productsPage;
+    protected EditProductPage editProductPage;
+    // Thêm các PO khác nếu cần cho AdminTest
+    // Ví dụ:
+    // protected AdminPage adminDashboardPage;
+    // protected OrdersPage ordersPage;
+    // protected CustomersPage customersPage;
+
 
     // ============================
     // CONFIG MẶC ĐỊNH
@@ -55,8 +71,30 @@ public class BaseTest {
         driver.manage().timeouts()
                 .pageLoadTimeout(Duration.ofSeconds(PAGELOAD_WAIT));
 
+        // KHỞI TẠO PAGE OBJECTS SAU KHI DRIVER ĐÃ SẴN SÀNG (FIX LỖI)
+        initializePageObjects();
+
         driver.get(BASE_URL);
         extentTest.log(Status.INFO, "Navigate to: " + BASE_URL);
+    }
+
+    // PHƯƠNG THỨC KHỞI TẠO PAGE OBJECTS
+    private void initializePageObjects() {
+        if (driver == null) {
+            throw new IllegalStateException("WebDriver must be initialized before initializing Page Objects.");
+        }
+        // Khởi tạo tất cả PO cần thiết
+        loginPage = new LoginOrRegisterPage(driver);
+        categoriesPage = new CategoriesPage(driver);
+        editCategoryPage = new EditCategoryPage(driver);
+        suppliersPage = new SuppliersPage(driver);
+        editSupplierPage = new EditSupplierPage(driver);
+        productsPage = new ProductsPage(driver);
+        editProductPage = new EditProductPage(driver);
+        // Khởi tạo các PO admin khác nếu có
+        // adminDashboardPage = new AdminPage(driver);
+        // ordersPage = new OrdersPage(driver);
+        // customersPage = new CustomersPage(driver);
     }
 
     // ============================
@@ -69,10 +107,8 @@ public class BaseTest {
             case "firefox":
                 FirefoxOptions ff = new FirefoxOptions();
                 if (IS_GITHUB) {
-                    // GitHub Actions: chạy headless
                     ff.addArguments("--headless");
                 } else {
-                    // Local: browser tự mở và hiển thị (mặc định không headless)
                     ff.addArguments("--start-maximized");
                 }
                 return new FirefoxDriver(ff);
@@ -82,13 +118,11 @@ public class BaseTest {
                 ChromeOptions co = new ChromeOptions();
 
                 if (IS_GITHUB) {
-                    // GitHub Actions: chạy headless
                     co.addArguments("--headless=new");
                     co.addArguments("--no-sandbox");
                     co.addArguments("--disable-dev-shm-usage");
                     co.addArguments("--disable-gpu");
                 } else {
-                    // Local: browser tự mở và hiển thị (mặc định không headless)
                     co.addArguments("--start-maximized");
                     co.addArguments("--disable-notifications");
                     co.addArguments("--disable-infobars");
