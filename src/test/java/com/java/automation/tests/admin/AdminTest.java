@@ -1,13 +1,6 @@
 package com.java.automation.tests.admin;
 
 import com.java.automation.base.BaseTest;
-import com.java.automation.pages.CategoriesPage;
-import com.java.automation.pages.EditCategoryPage;
-import com.java.automation.pages.EditProductPage;
-import com.java.automation.pages.EditSupplierPage;
-import com.java.automation.pages.LoginOrRegisterPage;
-import com.java.automation.pages.ProductsPage;
-import com.java.automation.pages.SuppliersPage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -16,7 +9,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * All Admin Test Cases - Authentication, Dashboard, Navigation, CRUD Operations
+ * All Admin Test Cases - Authentication, Dashboard, Navigation, CRUD Operations (ĐÃ FIX LỖI INIT PO)
  */
 public class AdminTest extends BaseTest {
 
@@ -28,7 +21,7 @@ public class AdminTest extends BaseTest {
     }
 
     private void loginAsAdmin() {
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+        // SỬ DỤNG loginPage ĐƯỢC KHỞI TẠO TỪ BaseTest
         loginPage.navigateToLoginPage();
         loginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
     }
@@ -40,7 +33,7 @@ public class AdminTest extends BaseTest {
         extentTest.log(com.aventstack.extentreports.Status.INFO,
                 "Bắt đầu test đăng nhập admin với username: " + ADMIN_USERNAME);
 
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+        // SỬ DỤNG loginPage ĐƯỢC KHỞI TẠO TỪ BaseTest
         loginPage.navigateToLoginPage();
         loginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
 
@@ -57,7 +50,7 @@ public class AdminTest extends BaseTest {
         extentTest.log(com.aventstack.extentreports.Status.INFO,
                 "Bắt đầu test đăng nhập admin với mật khẩu sai");
 
-        LoginOrRegisterPage loginPage = new LoginOrRegisterPage(driver);
+        // SỬ DỤNG loginPage ĐƯỢC KHỞI TẠO TỪ BaseTest
         loginPage.navigateToLoginPage();
         loginPage.login(ADMIN_USERNAME, "wrong_password");
 
@@ -81,7 +74,7 @@ public class AdminTest extends BaseTest {
         extentTest.log(com.aventstack.extentreports.Status.INFO, "Bắt đầu CRUD category end-to-end");
         loginAsAdmin();
 
-        CategoriesPage categoriesPage = new CategoriesPage(driver);
+        // SỬ DỤNG categoriesPage TỪ BaseTest
         categoriesPage.navigateToCategoriesPage();
 
         String categoryName = uniqueName("AutoCat-");
@@ -91,10 +84,10 @@ public class AdminTest extends BaseTest {
         Assert.assertNotNull(categoriesPage.findCategoryRow(categoryName), "Không tìm thấy category vừa thêm");
 
         categoriesPage.clickEditForCategory(categoryName);
-        EditCategoryPage editCategoryPage = new EditCategoryPage(driver);
+        // SỬ DỤNG editCategoryPage TỪ BaseTest
         editCategoryPage.updateCategoryName(updatedName);
 
-        categoriesPage = new CategoriesPage(driver);
+        // SỬ DỤNG categoriesPage TỪ BaseTest
         categoriesPage.navigateToCategoriesPage();
         Assert.assertNotNull(categoriesPage.findCategoryRow(updatedName), "Không thấy category sau khi update");
 
@@ -109,7 +102,7 @@ public class AdminTest extends BaseTest {
         extentTest.log(com.aventstack.extentreports.Status.INFO, "Bắt đầu CRUD supplier end-to-end");
         loginAsAdmin();
 
-        SuppliersPage suppliersPage = new SuppliersPage(driver);
+        // SỬ DỤNG suppliersPage TỪ BaseTest
         suppliersPage.navigateToSuppliersPage();
 
         String supplierName = uniqueName("AutoSupplier-");
@@ -120,14 +113,14 @@ public class AdminTest extends BaseTest {
         Assert.assertNotNull(suppliersPage.findSupplierRow(supplierName), "Không tìm thấy supplier vừa thêm");
 
         suppliersPage.clickEditSupplier(supplierName);
-        EditSupplierPage editSupplierPage = new EditSupplierPage(driver);
+        // SỬ DỤNG editSupplierPage TỪ BaseTest
 
         String updatedName = supplierName + "-Updated";
         String updatedEmail = updatedName.toLowerCase() + "@example.com";
         String updatedPhone = "091" + (int) (Math.random() * 1000000);
         editSupplierPage.updateSupplier(updatedName, updatedEmail, updatedPhone);
 
-        suppliersPage = new SuppliersPage(driver);
+        // SỬ DỤNG suppliersPage TỪ BaseTest
         suppliersPage.navigateToSuppliersPage();
         Assert.assertNotNull(suppliersPage.findSupplierRow(updatedName), "Không thấy supplier sau khi update");
 
@@ -142,7 +135,7 @@ public class AdminTest extends BaseTest {
         extentTest.log(com.aventstack.extentreports.Status.INFO, "Bắt đầu CRUD product end-to-end");
         loginAsAdmin();
 
-        ProductsPage productsPage = new ProductsPage(driver);
+        // SỬ DỤNG productsPage TỪ BaseTest
         productsPage.navigateToProductsPage();
 
         String productName = uniqueName("AutoProduct-");
@@ -162,7 +155,7 @@ public class AdminTest extends BaseTest {
         Assert.assertNotNull(productsPage.findProductRow(productName), "Không tìm thấy sản phẩm vừa thêm");
 
         productsPage.clickEditProduct(productName);
-        EditProductPage editProductPage = new EditProductPage(driver);
+        // SỬ DỤNG editProductPage TỪ BaseTest
 
         String updatedName = productName + "-Updated";
         String updatedPrice = "2222275";  // DOUBLE
@@ -171,7 +164,7 @@ public class AdminTest extends BaseTest {
         String updatedDescription = "Updated auto product"; // VARCHAR(255)
         editProductPage.updateProduct(updatedName, updatedPrice, updatedQuantity, updatedDiscount, enteredDate, updatedDescription, imagePath);
 
-        productsPage = new ProductsPage(driver);
+        // SỬ DỤNG productsPage TỪ BaseTest
         productsPage.navigateToProductsPage();
         Assert.assertNotNull(productsPage.findProductRow(updatedName), "Không thấy sản phẩm sau khi update");
 
