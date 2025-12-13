@@ -1,4 +1,4 @@
-name: Vegana Shop CI Pipeline (Final Fix: Reliable Chrome Setup)
+name: Vegana Shop CI Pipeline (Fixed Dependency Errors)
 
 on:
   push:
@@ -41,19 +41,17 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # FIX LỖI LIBASOUND2/LIBXSS1: Cài đặt Google Chrome (On-the-fly) và các libs cần thiết
-      - name: Install Google Chrome and Minimal Dependencies
+      # FIX LỖI LIBASOUND2/LIBXSS1: Chỉ cài các thư viện cơ bản và sử dụng Chromium
+      - name: Install Core Dependencies for Headless Chrome
         run: |
           sudo apt-get update
-          # Cài đặt các libs cơ bản nhất cho Chrome Headless
-          sudo apt-get install -y default-mysql-client libgbm-dev
-          
-          # Tải và cài đặt Google Chrome DEB package
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get install -f -y # Dùng apt-get -f để fix dependency
-          
-          # Dọn dẹp
-          rm google-chrome-stable_current_amd64.deb
+          # Cài các gói cơ bản
+          sudo apt-get install -y default-mysql-client libgbm-dev libnss3 libfontconfig1
+          # Cài Chromium
+          sudo apt-get install -y chromium-browser
+          # Clean up và thử fix lỗi dependency (Rất quan trọng)
+          sudo apt-get autoremove -y
+          sudo apt-get clean
 
       - name: Wait for MySQL Ready
         env: { MYSQL_PWD: 10112008 }
@@ -73,15 +71,15 @@ jobs:
             echo "⚠️ NO vegana.sql found — skipping import."
           fi
 
-      # Tối ưu hóa khởi động ứng dụng và kiểm tra sức khỏe (Tránh lỗi 500)
       - name: Build Application (skip tests)
         run: mvn -q -DskipTests clean package
 
+      # FIX: Tối ưu hóa khởi động ứng dụng và kiểm tra sức khỏe (Tránh lỗi 500)
       - name: Start Spring Boot Application and Check Health
         id: start_app
         run: |
           echo "🚀 Starting Spring Boot (java -jar)..."
-          # Sử dụng java -jar thay vì mvn spring-boot:run
+          # Sử dụng java -jar, đáng tin cậy hơn
           nohup java -jar target/*.jar > app.log 2>&1 & 
           
           echo "⏳ Waiting for backend to start (Max 90s)..."
@@ -108,8 +106,11 @@ jobs:
         # BƯỚC NÀY SẼ CHẠY KHI BACKEND KHỞI ĐỘNG THÀNH CÔNG
         run: |
           mkdir -p test-output/reports test-output/screenshots test-output/logs
+          # LƯU Ý: Nếu lỗi Driver Null vẫn xảy ra, bạn cần FIX code Java (BaseTest/AdminTest)
           mvn -q test -DsuiteXmlFile=src/test/resources/testng.xml
         continue-on-error: true # Giữ nguyên setting của bạn
+
+      # --- Upload Reports ---
 
       - name: Upload Test Reports
         if: always()
