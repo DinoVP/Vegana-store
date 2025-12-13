@@ -41,15 +41,17 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # FIX LỖI LIBXSS1/LIBASOUND2: Chỉ cài các thư viện cơ bản nhất cho Headless Chrome
+      # FIX LỖI LIBASOUND2/LIBXSS1: Chỉ cài các thư viện cơ bản và sử dụng Chromium
       - name: Install Core Dependencies for Headless Chrome
         run: |
           sudo apt-get update
+          # Cài các gói cơ bản
           sudo apt-get install -y default-mysql-client libgbm-dev libnss3 libfontconfig1
-          # Chạy fix nếu có lỗi dependency
-          sudo apt-get install -f
-          # Cài đặt Chrome/Chromium
-          sudo apt-get install -y chromium-browser || true
+          # Cài Chromium
+          sudo apt-get install -y chromium-browser
+          # Clean up và thử fix lỗi dependency (Rất quan trọng)
+          sudo apt-get autoremove -y
+          sudo apt-get clean
 
       - name: Wait for MySQL Ready
         env: { MYSQL_PWD: 10112008 }
@@ -72,12 +74,12 @@ jobs:
       - name: Build Application (skip tests)
         run: mvn -q -DskipTests clean package
 
-      # Tối ưu hóa khởi động ứng dụng và kiểm tra sức khỏe (Tránh lỗi 500)
+      # FIX: Tối ưu hóa khởi động ứng dụng và kiểm tra sức khỏe (Tránh lỗi 500)
       - name: Start Spring Boot Application and Check Health
         id: start_app
         run: |
           echo "🚀 Starting Spring Boot (java -jar)..."
-          # Chạy bằng java -jar để tránh sự cố với mvn spring-boot:run trong môi trường CI
+          # Sử dụng java -jar, đáng tin cậy hơn
           nohup java -jar target/*.jar > app.log 2>&1 & 
           
           echo "⏳ Waiting for backend to start (Max 90s)..."
@@ -101,10 +103,14 @@ jobs:
           exit 1 # Gây thất bại nếu không vượt qua được kiểm tra sức khỏe
 
       - name: Run Automation Tests (Selenium + TestNG)
+        # BƯỚC NÀY SẼ CHẠY KHI BACKEND KHỞI ĐỘNG THÀNH CÔNG
         run: |
           mkdir -p test-output/reports test-output/screenshots test-output/logs
+          # LƯU Ý: Nếu lỗi Driver Null vẫn xảy ra, bạn cần FIX code Java (BaseTest/AdminTest)
           mvn -q test -DsuiteXmlFile=src/test/resources/testng.xml
-        continue-on-error: true
+        continue-on-error: true # Giữ nguyên setting của bạn
+
+      # --- Upload Reports ---
 
       - name: Upload Test Reports
         if: always()
