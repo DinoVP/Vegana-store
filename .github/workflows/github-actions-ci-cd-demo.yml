@@ -15,7 +15,7 @@ jobs:
     name: Run Spring Boot + Selenium Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Thêm permissions cho job CI (nếu cần artifacts)
+    # Cung cấp quyền đọc tối thiểu
     permissions:
       contents: read
 
@@ -44,10 +44,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # FIX LỖI DEPENDENCY LINUX: Chỉ cài đặt gói tối thiểu (tránh libasound2, libxss1)
+      # FIX LỖI DEPENDENCY LINUX (libasound2, libxss1): Chỉ cài đặt gói tối thiểu
       - name: Install MySQL Client and Headless Dependencies
         run: |
           sudo apt-get update
+          # Các gói này đã được chứng minh là đủ cho Headless trong các môi trường mới
           sudo apt-get install -y default-mysql-client libgbm-dev
 
       - name: Wait for MySQL Ready
@@ -137,9 +138,9 @@ jobs:
     name: Create GitHub Release (Unconditional)
     runs-on: ubuntu-latest
     needs: automation-tests
-    # CHẠY MỌI LÚC BẤT KỂ KẾT QUẢ CI VÀ CHỈ TRÊN MAIN
+    # CHẠY MỌI LÚC BẤT KỂ KẾT QUẢ CI
     if: always() && github.ref == 'refs/heads/main'
-    # FIX LỖI: Cung cấp quyền WRITE cho Job CD để tạo Release
+    # FIX LỖI "Resource not accessible": Cung cấp quyền WRITE
     permissions:
       contents: write
 
