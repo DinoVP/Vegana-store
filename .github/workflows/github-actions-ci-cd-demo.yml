@@ -22,12 +22,12 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_ROOT_PASSWORD: 10112008
           MYSQL_DATABASE: vegana_store
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
+          --health-cmd="mysqladmin ping -h localhost -uroot -p10112008"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
